@@ -1,0 +1,1 @@
+const taskbar = UI.create('div', document.body, 'taskbar');
