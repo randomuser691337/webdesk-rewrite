@@ -167,8 +167,8 @@ button {
     background: #00CD4E;
 }
 
-.window-btn:hover:before,
-.window-btn:hover:after {
+.window-header-nav-cont:hover .window-btn:before,
+.window-header-nav-cont:hover .window-btn:after {
     top: 50%;
     opacity: 1;
 }

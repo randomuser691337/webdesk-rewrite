@@ -81,33 +81,44 @@
             files();
             const scri = UI.create('script', document.body);
             scri.type = "module";
-            scri.textContent = `import { unzipSync } from "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js"; async function extractZipToOPFS(zipFile) {
+            scri.textContent = `import { unzipSync } from "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js";
+            async function extractZipToOPFS(zipFile) {
                 const buffer = new Uint8Array(await zipFile.arrayBuffer());
                 const files = unzipSync(buffer);
 
                 for (const name in files) {
                     const fileData = files[name];
 
-                    // Skip directories
-                    if (fileData.length === 0 && !name.includes('.')) continue;
-
-                    const content = new Blob([fileData]);
+                    // Skip directories (either ends with '/' or is zero-length and has no extension)
+                    if (name.endsWith('/') || (fileData.length === 0 && !name.includes('.'))) continue;
                     const filetype = name.match(/\.(png|jpg|jpeg|gif)$/i) ? "image" : "text";
-                    await fs.write('/extracted/' + name, content, filetype);
+                    let content;
+                    if (filetype === "image") {
+                        content = fileData;
+                    } else {
+                        content = new TextDecoder().decode(fileData);
+                    }
+                    console.log(name, fileData);
+                    await fs.write('/' + name, content, filetype);
+                    console.log(fileData);
+                    /* if (name.startsWith('apps/') && name.endsWith('index.js')) {
+                        await fs.write('/appdata/launcher/' + name.replace('apps/', ''), '', filetype);
+                    } */
                 }
 
                 console.log("ZIP extracted to OPFS.");
             }
 
-            const inputthing = UI.create('input', document.body);
-            inputthing.type = "file";
-
-            inputthing.addEventListener("change", async e => {
-                const zip = e.target.files[0];
-                if (zip && zip.name.endsWith(".zip")) {
-                    await extractZipToOPFS(zip);
+            (async () => {
+                try {
+                    const response = await fetch('./desk.zip');
+                    if (!response.ok) throw new Error('Failed to fetch desk.zip');
+                    const zipBlob = await response.blob();
+                    await extractZipToOPFS(zipBlob);
+                } catch (err) {
+                    console.error('Error extracting desk.zip:', err);
                 }
-            });`
+            })();`
         }
 
         console.log('<i> bootcode initialized');

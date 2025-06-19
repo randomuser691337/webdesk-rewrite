@@ -29,6 +29,7 @@ var UI = {
         const win = this.create("div", document.body, "window");
         const header = this.create("div", win, "window-header");
         const headerbtns = this.create("div", header, "window-header-nav");
+        const headerbtnscont = this.create("div", headerbtns, "window-header-nav-cont");
         const headertxt = this.create("div", header, "window-header-text");
         const content = this.create("div", win, "window-content");
         headertxt.textContent = title;
@@ -41,9 +42,9 @@ var UI = {
             }
         });
 
-        const closeBtn = this.button(headerbtns, '', "window-btn close-btn");
-        const minBtn = this.button(headerbtns, '', "window-btn min-btn");
-        const maxBtn = this.button(headerbtns, '', "window-btn max-btn");
+        const closeBtn = this.button(headerbtnscont, '', "window-btn close-btn");
+        const minBtn = this.button(headerbtnscont, '', "window-btn min-btn");
+        const maxBtn = this.button(headerbtnscont, '', "window-btn max-btn");
 
         let offsetX = 0, offsetY = 0;
         let isDragging = false;
@@ -73,7 +74,17 @@ var UI = {
             window.addEventListener("pointerup", onPointerUp);
         });
 
-        return { win, header, content, headertxt, headerbtns };
+        /* Default close button, redefine like this for example:
+        const win = UI.window('example');
+        win.buttons.closeBtn.addEventListener("click", () => {
+            win.remove();
+        }); */
+
+        closeBtn.addEventListener("click", () => {
+            win.remove();
+        });
+
+        return { win, header, content, headertxt, headerbtns, buttons: { closeBtn, minBtn, maxBtn } };
     },
     img: async function (parent, path, classname) {
         const blob = await fs.read(path);
