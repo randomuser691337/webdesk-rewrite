@@ -98,4 +98,7 @@ var UI = {
     changevar: function (varname, value) {
         document.documentElement.style.setProperty(`--${varname}`, value);
     },
+    remove: function (div) {
+        div.remove();
+    }
 }

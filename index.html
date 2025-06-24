@@ -2,83 +2,41 @@
 <html>
 
 <head>
-    <link rel="stylesheet" href="./style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>WebDesk 0.3.3</title>
 </head>
 
 <body>
-    <p>WebDesk 0.3.3 REBUILD #495893285923858!!!!!!!</p>
-    <p>Update Mode - WebDesk will update every reload</p>
-    <input type="file" id="input" multiple />
     <script src="./ui.js"></script>
     <script>
-        const inputElement = document.getElementById("input");
-        const erasebootcode = UI.button(document.body, "Copy and delete boot code");
-        erasebootcode.onclick = async () => {
-            const bootcode = await fs.read("/boot.js");
-            navigator.clipboard.writeText(bootcode);
-            await fs.del("/boot.js");
-            window.location.reload();
-        };
-
-        inputElement.addEventListener("change", async function () {
-            for (const file of this.files) {
-                const path = `/uploads/${file.name}`;
-                const isImage = file.type.startsWith("image");
-
-                const content = isImage ? file : await file.text();
-
-                try {
-                    await fs.write(path, content, isImage ? "image" : "text");
-                    const blob = await fs.read(path);
-
-                    if (isImage && blob instanceof Blob) {
-                        const img = document.createElement("img");
-                        img.src = URL.createObjectURL(blob);
-                        img.style.maxWidth = "200px";
-                        document.body.appendChild(img);
-                    } else {
-                        console.log(`Text file contents of ${file.name}:`, blob);
-                    }
-                } catch (err) {
-                    console.error(`Failed to process ${file.name}:`, err);
+        var Scripts = {
+            loadJS: async function (path) {
+                console.log('<i> Initializing ' + path)
+                const data = await fs.read(path);
+                if (!data) {
+                    console.error(`<!> ${path} not found or not readable.`);
+                    return;
                 }
+                var script = document.createElement('script');
+                script.textContent = data;
+                document.head.appendChild(script);
+            },
+            loadCSS: async function (path) {
+                console.log('<i> Loading CSS: ' + path)
+                const data = await fs.read(path);
+                if (!data) {
+                    console.error(`<!> ${path} not found or not readable.`);
+                    return;
+                }
+                var script = document.createElement('style');
+                script.textContent = data;
+                document.head.appendChild(script);
             }
-        });
-
+        }
+        
         async function boot() {
             console.log('<i> ref start the game');
-            const bootcode = await fs.read("/boot.js");
-            const debugwin = UI.window('Debug Console');
-            debugwin.win.style.width = "600px";
-            debugwin.win.style.height = "600px";
-            const p = UI.text(debugwin.content, 'Boot Code');
-            const textbox = UI.create("textarea", debugwin.content);
-            textbox.placeholder = "Write your boot code here...";
-            textbox.style.width = "100%";
-            textbox.style.height = "400px";
-            const savebutton = UI.button(debugwin.content, "Save Boot Code");
-            savebutton.onclick = async () => {
-                const code = textbox.value;
-                if (code) {
-                    await fs.write("/boot.js", code, "text");
-                    p.textContent = 'Boot code saved! Reload to run it.';
-                    p.style.color = 'green';
-                } else {
-                    p.textContent = 'Please write some boot code!';
-                    p.style.color = 'red';
-                }
-            };
-            if (bootcode === null) {
-                p.style.color = 'red';
-            } else {
-                const script = UI.create("script", document.body);
-                script.textContent = bootcode;
-                textbox.value = bootcode;
-            }
-            files();
             const scri = UI.create('script', document.body);
             scri.type = "module";
             scri.textContent = `import { unzipSync } from "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js";
@@ -101,12 +59,17 @@
                     console.log(name, fileData);
                     await fs.write('/' + name, content, filetype);
                     console.log(fileData);
-                    /* if (name.startsWith('apps/') && name.endsWith('index.js')) {
-                        await fs.write('/appdata/launcher/' + name.replace('apps/', ''), '', filetype);
-                    } */
+                    if (name.startsWith('apps/') && name.endsWith('index.js')) {
+                        const parts = name.split('/');
+                        let lastdir = parts[parts.length - 2];
+                        lastdir = lastdir.replace('.app', '');
+                        await fs.write('/system/Desktop.app/Items/' + lastdir, '/' + name, filetype);
+                    }
                 }
 
-                console.log("ZIP extracted to OPFS.");
+                console.log("ZIP extracted to OPFS. Handing control to init.js.");
+                
+                Scripts.loadJS('/system/init.js');
             }
 
             (async () => {
@@ -123,78 +86,6 @@
 
         console.log('<i> bootcode initialized');
         console.log('<i> launching files beta');
-        async function files() {
-            const win = UI.window('Files');
-            win.win.style.width = "600px";
-            win.win.style.height = "400px";
-            win.headertxt.innerHTML = "";
-            win.content.style.padding = "0px";
-            const crumbs = UI.create('div', win.headertxt);
-            const filelist = UI.create('div', win.content);
-            let dir;
-            async function nav(path) {
-                dir = await fs.ls(path);
-                filelist.innerHTML = "";
-                crumbs.innerHTML = "";
-                const buttonhome = UI.button(crumbs, '/', 'ui-small-btn');
-                buttonhome.onclick = () => {
-                    nav("/");
-                };
-                const trimmedPath = path.replace(/\/+$/, '');
-                const parts = trimmedPath.split('/').filter(Boolean);
-
-                let currentPath = '';
-                const breadcrumbs = [];
-
-                parts.forEach((part, index) => {
-                    currentPath += `/${part}`;
-                    const crumbPath = parts.slice(0, index + 1).join('/');
-
-                    const button = UI.button(crumbs, part, 'ui-small-btn');
-                    button.onclick = () => {
-                        nav("/" + crumbPath);
-                    };
-
-                    breadcrumbs.push(button);
-                });
-                dir.forEach(function (file) {
-                    let name;
-                    if (file.kind === "directory") {
-                        name = `📁 ` + file.name;
-                    } else {
-                        name = `📄 ` + file.name;
-                    }
-
-                    const button = UI.button(filelist, name, 'files-list');
-                    button.addEventListener('dblclick', function () {
-                        if (file.kind === "directory") {
-                            nav(file.path);
-                        } else {
-                            fs.read(file.path).then(blob => {
-                                const win = UI.window(file.name);
-                                if (file.path.endsWith('.png') || file.path.endsWith('.jpg') || file.path.endsWith('.jpeg') || file.path.endsWith('.gif')) {
-                                    win.content.style = "backdrop-filter: blur(0px); padding: 0px";
-                                    win.win.style.width = "450px";
-                                    const img = new Image();
-                                    const url = URL.createObjectURL(blob);
-                                    img.onload = () => {
-                                        URL.revokeObjectURL(url);
-                                    };
-                                    img.src = url;
-                                    img.style = "max-width: 100%";
-                                    win.content.appendChild(img);
-                                } else {
-                                    win.content.textContent = blob;
-                                }
-                            }).catch(err => {
-                                console.error(`Failed to read ${file.name}:`, err);
-                            });
-                        }
-                    });
-                });
-            }
-            await nav('/');
-        }
     </script>
 </body>
 <script src="./fs.js"></script>
