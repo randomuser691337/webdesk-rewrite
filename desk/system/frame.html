@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WebDesk Container</title>
+</head>
+
+<body>
+    <script>
+        window.addEventListener("message", (event) => {
+            // if (event.origin !== "http://example.com:8080") return;
+            console.log('test!!!dsalfjkadsfkdjfasdj;');
+            event.source.postMessage("Faaaawk", event.origin);
+        });
+    </script>
+</body>
+
+</html>

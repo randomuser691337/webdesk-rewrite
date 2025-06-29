@@ -11,9 +11,9 @@
     --font-size-ui: 14px;
     --font-size-small: 12px;
     --main-ui-blur: 12px;
-    --border-radius-main: 16px;
+    --border-radius-main: 15px;
     --border-radius-secondary: 12px;
-    --border-radius-small: 8px;
+    --border-radius-small: 9px;
 }
 
 body {
@@ -45,7 +45,7 @@ button {
     background-color: rgba(var(--bg-ui-primary), 0.85);
     border: 1px solid rgba(var(--ui-secondary));
     border-radius: var(--border-radius-main);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
     overflow: auto !important;
     resize: both;
 }
@@ -54,10 +54,11 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 12px;
+    padding: 8px 10px;
     background-color: rgba(var(--bg-ui-primary), 1.0);
     border-bottom: 1px solid rgba(var(--ui-secondary));
     flex-shrink: 0;
+    box-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);
 }
 
 .window-header-nav {
@@ -185,20 +186,24 @@ button {
     border: none;
     border-radius: var(--border-radius-secondary);
     box-sizing: border-box;
-    margin: 1px;
-    transition: 0.06s ease-in-out;
+    margin: 2px;
+    transition: 0.0s ease-in-out;
     padding: 0px;
-    border: 1px solid rgba(var(--ui-accent), 0.22);
+    /* border: 1px solid rgba(var(--ui-accent), 0.22); */
     overflow: hidden;
+    box-shadow: 0 2px 1px 0px rgba(0, 0, 0, 0.16), inset 0px 0px 5px -1px rgba(0, 0, 0, 0.4);
 }
 
 .ui-main-btn:active {
-    background-color: rgba(var(--bg-ui-primary), 1);
-    border-radius: var(--border-radius-main);
+    box-shadow: 0 2px 1px 0px rgba(0, 0, 0, 0.24), inset 0px 0px 5px -1px rgba(0, 0, 0, 0.6);
 }
 
+/* .ui-main-btn:hover {
+    box-shadow: 0 2px 1px 0px rgba(0, 0, 0, 0.16), inset 0px 0px 5px -1px rgba(0, 0, 0, 0.4);
+} */
+
 .ui-main-btn-filler {
-    background-color: rgba(var(--ui-accent), 0.05);
+    background: radial-gradient(rgba(var(--ui-accent), 0.1), rgba(var(--ui-accent), 0.08));
     width: 100%;
     padding: 8px 12px;
     box-sizing: border-box;
@@ -206,7 +211,11 @@ button {
 }
 
 .ui-main-btn-filler:hover {
-    background-color: rgba(var(--ui-accent), 0.1);
+    background: radial-gradient(rgba(var(--ui-accent), 0.16), rgba(var(--ui-accent), 0.13));
+}
+
+.ui-main-btn-filler:active {
+    background: radial-gradient(rgba(var(--ui-accent), 0.19), rgba(var(--ui-accent), 0.17));
 }
 
 .ui-small-btn {
@@ -241,13 +250,14 @@ button {
 
 .wide {
     width: 100%;
+    margin-left: 0px !important;
+    margin-right: 0px !important;
 }
 
 .files-list {
     background-color: transparent;
     color: var(--text);
     border: none;
-    border-bottom: 1px solid rgba(var(--bg-ui-primary), 1.0);
     box-sizing: border-box;
     margin: 0px;
     width: 100%;
@@ -255,6 +265,7 @@ button {
     overflow: hidden;
     text-align: left;
     transition: 0.08s ease-in-out;
+    border-bottom: 1px solid rgba(var(--ui-secondary), 0.2);
 }
 
 .files-list:hover {
@@ -271,22 +282,20 @@ button {
     left: 3px;
     right: 3px;
     display: flex;
-    background-color: rgba(var(--bg-ui-primary), 0.8);
+    background-color: rgba(var(--bg-ui-primary), 0.85);
     padding: 4px;
     border-top: 1px solid rgba(var(--ui-secondary), 0.9);
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
-    border-radius: var(--border-radius-secondary);
+    border-radius: var(--border-radius-main);
 }
 
 .taskbar-menu {
     position: fixed;
-    left: 3px;
-    bottom: 40px;
     background-color: rgba(var(--bg-ui-primary), 0.8);
     padding: 4px;
     border: 1px solid rgba(var(--ui-secondary), 0.9);
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
-    border-radius: var(--border-radius-secondary);
+    border-radius: var(--border-radius-main);
 }
