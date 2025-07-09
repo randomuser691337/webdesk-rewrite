@@ -32,9 +32,16 @@
                 var script = document.createElement('style');
                 script.textContent = data;
                 document.head.appendChild(script);
+            },
+            async loadModule(code) {
+                const blob = new Blob([code], { type: "application/javascript" });
+                const url = URL.createObjectURL(blob);
+                const mod = await import(url);
+                URL.revokeObjectURL(url);
+                return mod;
             }
         }
-        
+
         async function boot() {
             console.log('<i> ref start the game');
             const scri = UI.create('script', document.body);

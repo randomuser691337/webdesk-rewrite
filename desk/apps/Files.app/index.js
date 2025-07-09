@@ -1,11 +1,22 @@
-(async function () {
+export async function launch(UI, fs, Scripts) {
     const win = UI.window('Files');
     win.win.style.width = "600px";
     win.win.style.height = "400px";
     win.headertxt.innerHTML = "";
     win.content.style.padding = "0px";
-    const crumbs = UI.create('div', win.headertxt);
-    const filelist = UI.create('div', win.content);
+    win.content.style.display = "flex";
+    const sidebar = UI.create('div', win.content, 'window-split-sidebar');
+    sidebar.appendChild(win.header);
+    win.header.classList.add('window-header-clear');
+    win.header.style.padding = "14px";
+    win.header.style.paddingBottom = "4px";
+    const sidebarcontent = UI.create('div', sidebar, 'content');
+    sidebarcontent.style.paddingTop = "0px";
+    UI.create('span', sidebarcontent, 'smalltxt').textContent = "Favorites";
+    const container = UI.create('div', win.content, 'window-split-content');
+    const crumbs = UI.create('div', container, 'window-draggable');
+    const filelist = UI.create('div', container);
+    filelist.style.paddingTop = "4px";
     let dir;
     async function nav(path) {
         dir = await fs.ls(path);
@@ -41,13 +52,13 @@
             }
 
             const button = UI.button(filelist, name, 'files-list');
-            button.addEventListener('dblclick', function () {
+            button.addEventListener('dblclick', async function () {
                 if (file.kind === "directory") {
                     nav(file.path);
                 } else {
-                    fs.read(file.path).then(blob => {
-                        const win = UI.window(file.name);
-                        if (file.path.endsWith('.png') || file.path.endsWith('.jpg') || file.path.endsWith('.jpeg') || file.path.endsWith('.gif')) {
+                    if (file.path.endsWith('.png') || file.path.endsWith('.jpg') || file.path.endsWith('.jpeg') || file.path.endsWith('.gif')) {
+                        fs.read(file.path).then(blob => {
+                            const win = UI.window(file.name);
                             win.content.style = "backdrop-filter: blur(0px); padding: 0px";
                             win.win.style.width = "450px";
                             const img = new Image();
@@ -58,15 +69,23 @@
                             img.src = url;
                             img.style = "max-width: 100%";
                             win.content.appendChild(img);
-                        } else {
-                            win.content.textContent = blob;
-                        }
-                    }).catch(err => {
-                        console.error(`Failed to read ${file.name}:`, err);
-                    });
+                        }).catch(err => {
+                            console.error(`Failed to read ${file.name}:`, err);
+                        });
+                    } else {
+                        const code = await fs.read('/apps/TextEdit.app/index.js');
+                        const mod = await Scripts.loadModule(code);
+                        const textedit = await mod.launch(UI, fs);
+                        textedit.open(file.path);
+                    }
                 }
             });
         });
     }
     await nav('/');
-})();
+    win.updateDraggables();
+    return {
+        open: nav,
+        getDir: () => dir,
+    };
+}

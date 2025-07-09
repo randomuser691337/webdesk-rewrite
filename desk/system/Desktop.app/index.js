@@ -41,8 +41,17 @@
         for (const file of items) {
             const btn = UI.button(menu, file.name, 'ui-main-btn wide');
             btn.addEventListener('click', async () => {
-                const code = await fs.read(file.path);
-                await Scripts.loadJS(code);
+                const path = await fs.read(file.path);
+                const code = await fs.read(path);
+                const mod = await Scripts.loadModule(code);
+
+                if (typeof mod.launch === 'function') {
+                    const appInstance = await mod.launch(UI, fs, Scripts);
+                    console.log(appInstance)
+                } else {
+                    console.warn(`${file.name} has no launch() export`);
+                }
+
                 closeCurrentMenu();
             });
         }
@@ -56,7 +65,7 @@
         closeCurrentMenu();
 
         const menu = UI.create('div', document.body, 'taskbar-menu');
-        const input = UI.create('input', menu);
+        const input = UI.create('input', menu, 'hide');
         input.type = "file";
         input.addEventListener("change", async function () {
             for (const file of this.files) {
@@ -79,6 +88,17 @@
                     console.error(`Failed to process ${file.name}:`, err);
                 }
             }
+        });
+
+        const uploadBtn = UI.button(menu, 'Upload File', 'ui-main-btn wide');
+        uploadBtn.addEventListener('click', () => {
+            input.click();
+        });
+
+        const softBtn = UI.button(menu, 'Reboot without re-initializing', 'ui-main-btn wide');
+        softBtn.addEventListener('click', () => {
+            document.body.innerHTML = '';
+            Scripts.loadJS('/system/init.js');
         });
 
         const taskrect = taskbar.getBoundingClientRect();

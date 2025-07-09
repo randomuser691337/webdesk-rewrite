@@ -77,7 +77,7 @@ var fs = {
 };
 
 fuckery.addEventListener("message", (msg) => {
-    console.log(msg.data);
+    // console.log(msg.data);
     if (msg.data.optype === "ready") {
         boot();
     }
@@ -89,3 +89,42 @@ fuckery.addEventListener("message", (msg) => {
         return true;
     });
 });
+
+var set = {
+    async ensureConfigLoaded() {
+        if (!sys.config) {
+            try {
+                const raw = await fs.read("/user/info/config.json");
+                sys.config = JSON.parse(raw);
+            } catch (e) {
+                sys.config = {};
+            }
+        }
+    },
+    async set(key, value) {
+        try {
+            await this.ensureConfigLoaded();
+            sys.config[key] = value;
+            await fs.write("/user/info/config.json", JSON.stringify(sys.config), 'text');
+            return true;
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+    },
+    async del(key) {
+        try {
+            await this.ensureConfigLoaded();
+            delete sys.config[key];
+            await fs.write("/user/info/config.json", JSON.stringify(sys.config), 'text');
+            return true;
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+    },
+    async read(key) {
+        await this.ensureConfigLoaded();
+        return sys.config[key];
+    }
+};
