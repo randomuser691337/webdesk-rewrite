@@ -1,4 +1,4 @@
-export async function launch(UI, fs, Scripts) {
+export async function launch(UI, fs, Scripts, defaultlaunch) {
     async function open(path) {
         const bootcode = await fs.read(path);
         const debugwin = UI.window('TextEdit');
@@ -24,19 +24,24 @@ export async function launch(UI, fs, Scripts) {
         };
 
         textbox.value = bootcode;
+
+        if (textbox.value === "[object File]") {
+            p.innerText = "This file is not a text file. It's meant to be opened with something else.";
+        }
+
+        debugwin.updateWindow();
     }
 
-    /* if (defaultlaunch) {
-        const defaultPath = '/apps/TextEdit.app/default.txt';
-        await open(defaultPath);
-    } else {
-        const path = await fs.selectFile('Select a file to edit', 'text');
+    if (defaultlaunch) {
+        const code = await fs.read('/apps/Files.app/index.js');
+        const mod = await Scripts.loadModule(code);
+        const path = await mod.pickFile(UI, fs);
         if (path) {
             await open(path);
         } else {
             console.warn('No file selected');
         }
-    } */
+    }
 
     return {
         open: open

@@ -17,6 +17,15 @@ export async function launch(UI, fs, Scripts) {
     const crumbs = UI.create('div', container, 'window-draggable');
     const filelist = UI.create('div', container);
     filelist.style.paddingTop = "4px";
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.height = "100%";
+    crumbs.style.position = "sticky";
+    crumbs.style.top = "0";
+    crumbs.style.zIndex = "1";
+    filelist.style.paddingTop = "4px";
+    filelist.style.overflowY = "auto";
+
     let dir;
     async function nav(path) {
         dir = await fs.ls(path);
@@ -24,7 +33,7 @@ export async function launch(UI, fs, Scripts) {
         crumbs.innerHTML = "";
         const buttonhome = UI.button(crumbs, '/', 'ui-small-btn');
         buttonhome.onclick = () => {
-            nav("/");
+            nav("");
         };
         const trimmedPath = path.replace(/\/+$/, '');
         const parts = trimmedPath.split('/').filter(Boolean);
@@ -38,7 +47,7 @@ export async function launch(UI, fs, Scripts) {
 
             const button = UI.button(crumbs, part, 'ui-small-btn');
             button.onclick = () => {
-                nav("/" + crumbPath);
+                nav(crumbPath);
             };
 
             breadcrumbs.push(button);
@@ -80,12 +89,118 @@ export async function launch(UI, fs, Scripts) {
                     }
                 }
             });
+
+            button.addEventListener('contextmenu', async function (e) {
+                e.preventDefault();
+                const contextMenu = UI.rightClickMenu(e);
+
+                const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn');
+                openButton.onclick = async () => {
+                    button.click();
+                    contextMenu.remove();
+                };
+
+                const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn');
+                deleteButton.onclick = async () => {
+                    await fs.rm(file.path);
+                    contextMenu.remove();
+                };
+            });
         });
     }
-    await nav('/');
-    win.updateDraggables();
+    await nav('');
+    win.updateWindow();
     return {
         open: nav,
         getDir: () => dir,
     };
+}
+
+export async function pickFile(UI, fs, Scripts) {
+    return new Promise(async (resolve) => {
+        const win = UI.window('Files');
+        win.win.style.width = "600px";
+        win.win.style.height = "400px";
+        win.headertxt.innerHTML = "";
+        win.content.style.padding = "0px";
+        win.content.style.display = "flex";
+        const sidebar = UI.create('div', win.content, 'window-split-sidebar');
+        win.buttons.closeBtn.style.display = "none";
+        win.content.appendChild(win.buttons.closeBtn);
+        sidebar.appendChild(win.header);
+        win.header.classList.add('window-header-clear');
+        win.header.style.padding = "14px";
+        win.header.style.paddingBottom = "4px";
+        const sidebarcontent = UI.create('div', sidebar, 'content');
+        sidebarcontent.style.paddingTop = "0px";
+        UI.create('span', sidebarcontent, 'smalltxt').textContent = "Select a file";
+        const container = UI.create('div', win.content, 'window-split-content');
+        const crumbs = UI.create('div', container, 'window-draggable');
+        const filelist = UI.create('div', container);
+        filelist.style.paddingTop = "4px";
+        container.style.display = "flex";
+        container.style.flexDirection = "column";
+        container.style.height = "100%";
+        crumbs.style.position = "sticky";
+        crumbs.style.top = "0";
+        crumbs.style.zIndex = "1";
+        filelist.style.paddingTop = "4px";
+        filelist.style.overflowY = "auto";
+
+        win.header.innerHTML = "";
+
+        const cancelButton = UI.button(win.header, 'Cancel', 'ui-small-btn wide');
+        cancelButton.onclick = () => {
+            win.buttons.closeBtn.click();
+            resolve(null);
+        };
+
+        let dir;
+        async function nav(path) {
+            dir = await fs.ls(path);
+            filelist.innerHTML = "";
+            crumbs.innerHTML = "";
+            const buttonhome = UI.button(crumbs, '/', 'ui-small-btn');
+            buttonhome.onclick = () => {
+                nav("");
+            };
+            const trimmedPath = path.replace(/\/+$/, '');
+            const parts = trimmedPath.split('/').filter(Boolean);
+
+            let currentPath = '';
+            const breadcrumbs = [];
+
+            parts.forEach((part, index) => {
+                currentPath += `/${part}`;
+                const crumbPath = parts.slice(0, index + 1).join('/');
+
+                const button = UI.button(crumbs, part, 'ui-small-btn');
+                button.onclick = () => {
+                    nav(crumbPath);
+                };
+
+                breadcrumbs.push(button);
+            });
+            dir.forEach(function (file) {
+                let name;
+                if (file.kind === "directory") {
+                    name = `📁 ` + file.name;
+                } else {
+                    name = `📄 ` + file.name;
+                }
+
+                const button = UI.button(filelist, name, 'files-list');
+                button.addEventListener('dblclick', async function () {
+                    if (file.kind === "directory") {
+                        nav(file.path);
+                    } else {
+                        win.buttons.closeBtn.click();
+                        resolve(file.path);
+                    }
+                });
+            });
+        }
+        await nav('');
+        win.updateWindow();
+    });
 }

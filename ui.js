@@ -75,18 +75,20 @@ var UI = {
             });
         };
 
-        const updateDraggables = () => {
+        const updateWindow = () => {
             const draggables = win.querySelectorAll('.window-draggable');
             draggables.forEach(setupDraggable);
+            win.style.left = `${(window.innerWidth - win.offsetWidth) / 2}px`;
+            win.style.top = `${(window.innerHeight - win.offsetHeight) / 2}px`;
         };
 
-        updateDraggables();
+        updateWindow();
 
         closeBtn.addEventListener("click", () => {
             win.remove();
         });
 
-        return { win, header, content, headertxt, headerbtns, buttons: { closeBtn, minBtn, maxBtn, container: headerbtnscont }, updateDraggables };
+        return { win, header, content, headertxt, headerbtns, buttons: { closeBtn, minBtn, maxBtn, container: headerbtnscont }, updateWindow };
     },
     img: async function (parent, path, classname) {
         const blob = await fs.read(path);
@@ -110,5 +112,16 @@ var UI = {
         } else {
             return text.slice(0, maxLength);
         }
+    },
+    rightClickMenu: function (event) {
+        const menu = this.create('div', document.body, 'right-click-menu');
+        menu.style.left = `${event.clientX}px`;
+        menu.style.top = `${event.clientY}px`;
+
+        document.addEventListener('click', () => {
+            this.remove(menu);
+        }, { once: true });
+
+        return menu;
     }
 }

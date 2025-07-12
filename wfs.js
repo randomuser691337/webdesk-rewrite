@@ -32,6 +32,7 @@ const fs = {
     },
 
     async write(path, uid, content, filetype) {
+        console.log(filetype)
         try {
             const fileHandle = await walkPath(path, { create: true, file: true });
             const writable = await fileHandle.createWritable();
@@ -39,7 +40,7 @@ const fs = {
                 const blob = content instanceof Blob ? content : new Blob([content]);
                 await writable.write(blob);
             } else {
-                await writable.write(content.toString());
+                await writable.write(typeof content === "string" ? content : content.toString());
             }
             await writable.close();
             self.postMessage({ optype: "write", uID: uid, data: true });
@@ -100,7 +101,7 @@ onmessage = (e) => {
     if (optype === "write") fs.write(data, uID, data2, filetype);
     if (optype === "erase") fs.erase(data, uID);
     if (optype === "ls") fs.ls(data, uID);
-    if (optype === "del") fs.del(data, uID);
+    if (optype === "rm") fs.del(data, uID);
 };
 
 self.postMessage({ optype: "ready" });

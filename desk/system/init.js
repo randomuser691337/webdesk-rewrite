@@ -1,6 +1,6 @@
 Scripts.loadCSS('/system/style.css');
 Scripts.loadJS('/system/core.js');
-Scripts.loadJS('/system/Desktop.app/index.js');
+Scripts.loadJS('/system/apps/Desktop.app/index.js');
 Scripts.loadJS('/system/lib/socket.io.js');
 var sys = {
     socket: undefined,

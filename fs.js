@@ -60,11 +60,11 @@ var fs = {
             fuckery.postMessage({ optype: "ls", uID, data: path });
         });
     },
-    del: function (path) {
+    rm: function (path) {
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });
-            fuckery.postMessage({ optype: "del", uID, data: path });
+            fuckery.postMessage({ optype: "rm", uID, data: path });
         });
     },
     erase: function (path) {

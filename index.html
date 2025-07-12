@@ -70,7 +70,7 @@
                         const parts = name.split('/');
                         let lastdir = parts[parts.length - 2];
                         lastdir = lastdir.replace('.app', '');
-                        await fs.write('/system/Desktop.app/Items/' + lastdir, '/' + name, filetype);
+                        await fs.write('/system/apps/Desktop.app/Items/' + lastdir, '/' + name, filetype);
                     }
                 }
 
