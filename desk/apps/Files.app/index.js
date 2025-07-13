@@ -25,6 +25,12 @@ export async function launch(UI, fs, Scripts) {
     crumbs.style.zIndex = "1";
     filelist.style.paddingTop = "4px";
     filelist.style.overflowY = "auto";
+    sidebar.style.display = "flex";
+    sidebar.style.flexDirection = "column";
+    sidebar.style.height = "100%";
+    win.header.style.flex = "none";
+    sidebarcontent.style.flex = "1";
+    sidebarcontent.style.overflow = "auto";
 
     let dir;
     async function nav(path) {
@@ -108,11 +114,22 @@ export async function launch(UI, fs, Scripts) {
             });
         });
     }
+
+    document.addEventListener('keydown', async (e) => {
+        if ((e.ctrlKey && e.metaKey && e.key === 'n') && UI.focusedWindow === win.win) {
+            const win2 = await launch(UI, fs, Scripts);
+            win2.window.win.style.left = (win.win.offsetLeft + 20) + "px";
+            win2.window.win.style.top = (win.win.offsetTop + 20) + "px";
+            win2.window.click();
+        }
+    });
+
     await nav('');
     win.updateWindow();
     return {
         open: nav,
         getDir: () => dir,
+        window: win
     };
 }
 
@@ -133,7 +150,6 @@ export async function pickFile(UI, fs, Scripts) {
         win.header.style.paddingBottom = "4px";
         const sidebarcontent = UI.create('div', sidebar, 'content');
         sidebarcontent.style.paddingTop = "0px";
-        UI.create('span', sidebarcontent, 'smalltxt').textContent = "Select a file";
         const container = UI.create('div', win.content, 'window-split-content');
         const crumbs = UI.create('div', container, 'window-draggable');
         const filelist = UI.create('div', container);
@@ -146,9 +162,16 @@ export async function pickFile(UI, fs, Scripts) {
         crumbs.style.zIndex = "1";
         filelist.style.paddingTop = "4px";
         filelist.style.overflowY = "auto";
+        sidebar.style.display = "flex";
+        sidebar.style.flexDirection = "column";
+        sidebar.style.height = "100%";
+        win.header.style.flex = "none";
+        sidebarcontent.style.flex = "1";
+        sidebarcontent.style.overflow = "auto";
+
 
         win.header.innerHTML = "";
-
+        UI.create('span', win.header, 'smalltxt').textContent = "Select a file";
         const cancelButton = UI.button(win.header, 'Cancel', 'ui-small-btn wide');
         cancelButton.onclick = () => {
             win.buttons.closeBtn.click();

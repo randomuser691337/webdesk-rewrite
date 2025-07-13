@@ -1,0 +1,55 @@
+WebDesk UI documentation and scripts
+For more examples or code, check out /apps/Files.app/index.js. Files is a good example.
+
+UI functions:
+    - UI.create(eltype, parent, classname)
+      - Creates an element and returns it ex. const el = UI.create('div', document.body)
+      - eltype: Type of element (ex. div, span, etc)
+      - parent: Parent element
+      - classname: Classnames for the element ex. "button" "button wide"
+
+    - UI.button(parent, text, classname)
+      - Creates a button element with optional styling and text.
+      - parent: Parent element
+      - text: Button label
+      - classname: Classnames for the button
+
+    - UI.text(parent, text, classname)
+      - Creates a paragraph element with text.
+      - parent: Parent element
+      - text: Text content
+      - classname: Classnames for the element
+
+    - UI.window(title)
+      - Creates a draggable window with header, content area, and control buttons.
+      - title: Window title
+      - Returns: { win, header, content, headertxt, headerbtns, buttons, updateWindow }
+
+    - UI.img(parent, path, classname)
+      - Loads an image from a file path and appends it to the parent.
+      - parent: Parent element
+      - path: Path to image file
+      - classname: Classnames for the image
+
+    - UI.changevar(varname, value)
+      - Sets a CSS variable on the root element.
+      - varname: Variable name (without --)
+      - value: Value to set
+
+    - UI.remove(div)
+      - Removes the given element from the DOM.
+      - div: Element to remove
+
+    - UI.truncate(text, maxLength, ellipsis = true)
+      - Truncates a string to a maximum length, optionally adding ellipsis.
+      - text: String to truncate
+      - maxLength: Maximum length
+      - ellipsis: Whether to add "..." (default: true)
+
+    - UI.rightClickMenu(event)
+      - Creates a right-click context menu at the event position.
+      - event: Mouse event
+      - Returns: The menu element
+
+    - UI.focusedWindow
+      - Reference to the currently focused window (if any)

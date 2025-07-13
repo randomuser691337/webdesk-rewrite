@@ -40,6 +40,7 @@ var UI = {
                 windowHighestZIndex += 1;
                 win.style.zIndex = windowHighestZIndex;
             }
+            UI.focusedWindow = win;
         });
 
         const closeBtn = this.button(headerbtnscont, '', "window-btn close-btn");
@@ -123,5 +124,6 @@ var UI = {
         }, { once: true });
 
         return menu;
-    }
+    },
+    focusedWindow: undefined,
 }

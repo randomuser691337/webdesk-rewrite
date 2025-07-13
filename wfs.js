@@ -22,17 +22,29 @@ const fs = {
         try {
             const fileHandle = await walkPath(path, { file: true });
             const file = await fileHandle.getFile();
-            const isText = file.type.startsWith("text") || file.type === "";
+            const textTypes = [
+                "application/json",
+                "application/javascript",
+                "application/xml",
+                "text/xml",
+                "application/xhtml+xml",
+                "application/ld+json",
+                "application/sql",
+                "application/x-httpd-php",
+                "application/x-yaml",
+                "text/yaml",
+            ];
+
+            const isText = file.type.startsWith("text") || file.type === "" || textTypes.includes(file.type);
             const data = isText ? await file.text() : file;
             self.postMessage({ optype: "read", uID: uid, data });
         } catch (err) {
-            console.error("read failed:", err);
+            console.error("read failed with " + path + ": ", err);
             self.postMessage({ optype: "read", uID: uid, data: null });
         }
     },
 
     async write(path, uid, content, filetype) {
-        console.log(filetype)
         try {
             const fileHandle = await walkPath(path, { create: true, file: true });
             const writable = await fileHandle.createWritable();
@@ -45,7 +57,7 @@ const fs = {
             await writable.close();
             self.postMessage({ optype: "write", uID: uid, data: true });
         } catch (err) {
-            console.error("write failed:", err);
+            console.error("write failed with " + path + ": ", err);
             self.postMessage({ optype: "write", uID: uid, data: false });
         }
     },
@@ -62,7 +74,7 @@ const fs = {
 
             self.postMessage({ optype: "del", uID: uid, data: true });
         } catch (err) {
-            console.error("del failed:", err);
+            console.error("del failed with " + path + ": ", err);
             self.postMessage({ optype: "del", uID: uid, data: false });
         }
     },

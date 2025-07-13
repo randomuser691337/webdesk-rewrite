@@ -37,6 +37,8 @@
         const taskrect = taskbar.getBoundingClientRect();
         menu.style.left = taskrect.left + "px";
         menu.style.bottom = taskrect.height + taskrect.left + taskrect.left + "px";
+        const name = await set.read('name');
+        UI.text(menu, name);
         const items = await fs.ls('/system/apps/Desktop.app/Items');
         for (const file of items) {
             const btn = UI.button(menu, file.name, 'ui-main-btn wide');

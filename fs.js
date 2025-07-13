@@ -96,6 +96,7 @@ var set = {
             try {
                 const raw = await fs.read("/user/info/config.json");
                 sys.config = JSON.parse(raw);
+                console.log(sys.config);
             } catch (e) {
                 sys.config = {};
             }
@@ -105,7 +106,7 @@ var set = {
         try {
             await this.ensureConfigLoaded();
             sys.config[key] = value;
-            await fs.write("/user/info/config.json", JSON.stringify(sys.config), 'text');
+            await fs.write("/user/info/config.json", JSON.stringify(sys.config));
             return true;
         } catch (error) {
             console.log(error);
@@ -116,7 +117,7 @@ var set = {
         try {
             await this.ensureConfigLoaded();
             delete sys.config[key];
-            await fs.write("/user/info/config.json", JSON.stringify(sys.config), 'text');
+            await fs.write("/user/info/config.json", JSON.stringify(sys.config));
             return true;
         } catch (error) {
             console.log(error);

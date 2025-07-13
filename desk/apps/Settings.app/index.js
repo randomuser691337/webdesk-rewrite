@@ -34,6 +34,7 @@ export async function launch(UI, fs, Scripts) {
 
     function Personalize() {
         title.innerText = "Personalization";
+        
     }
 
     win.updateWindow();
