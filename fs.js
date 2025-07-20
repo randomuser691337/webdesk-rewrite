@@ -28,7 +28,7 @@
     fs.del("/old/meme.txt").then(() => console.log("Deleted."));
 */
 
-const fuckery = new Worker('./wfs.js');
+const worker = new Worker('./wfs.js');
 
 function gen(min, max) {
     min = Math.ceil(min);
@@ -43,40 +43,40 @@ var fs = {
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });
-            fuckery.postMessage({ optype: "read", uID, data: path });
+            worker.postMessage({ optype: "read", uID, data: path });
         });
     },
     write: function (path, data, filetype = "text") {
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });
-            fuckery.postMessage({ optype: "write", uID, data: path, data2: data, filetype: filetype });
+            worker.postMessage({ optype: "write", uID, data: path, data2: data, filetype: filetype });
         });
     },
     ls: function (path) {
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });
-            fuckery.postMessage({ optype: "ls", uID, data: path });
+            worker.postMessage({ optype: "ls", uID, data: path });
         });
     },
     rm: function (path) {
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });
-            fuckery.postMessage({ optype: "rm", uID, data: path });
+            worker.postMessage({ optype: "rm", uID, data: path });
         });
     },
     erase: function (path) {
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });
-            fuckery.postMessage({ optype: "erase", uID, data: path });
+            worker.postMessage({ optype: "erase", uID, data: path });
         });
     }
 };
 
-fuckery.addEventListener("message", (msg) => {
+worker.addEventListener("message", (msg) => {
     // console.log(msg.data);
     if (msg.data.optype === "ready") {
         boot();
@@ -95,6 +95,10 @@ var set = {
         if (!sys.config) {
             try {
                 const raw = await fs.read("/user/info/config.json");
+                if (!raw) {
+                    sys.config = {};
+                    return;
+                }
                 sys.config = JSON.parse(raw);
                 console.log(sys.config);
             } catch (e) {

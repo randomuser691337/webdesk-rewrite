@@ -66,9 +66,12 @@ export async function launch(UI, fs, Scripts) {
                 name = `📄 ` + file.name;
             }
 
-            const button = UI.button(filelist, name, 'files-list');
-            button.addEventListener('dblclick', async function () {
-                if (file.kind === "directory") {
+            async function openfile() {
+                if (file.kind === "directory" && file.path.endsWith('.app')) {
+                    const code = await fs.read(file.path + '/index.js');
+                    const mod = await Scripts.loadModule(code);
+                    await mod.launch(UI, fs, Scripts, true);
+                } else if (file.kind === "directory") {
                     nav(file.path);
                 } else {
                     if (file.path.endsWith('.png') || file.path.endsWith('.jpg') || file.path.endsWith('.jpeg') || file.path.endsWith('.gif')) {
@@ -94,21 +97,31 @@ export async function launch(UI, fs, Scripts) {
                         textedit.open(file.path);
                     }
                 }
+            }
+
+            const button = UI.button(filelist, name, 'files-list');
+            button.addEventListener('dblclick', async function () {
+                await openfile();
             });
 
             button.addEventListener('contextmenu', async function (e) {
                 e.preventDefault();
                 const contextMenu = UI.rightClickMenu(e);
 
-                const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn');
+                const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn wide');
                 openButton.onclick = async () => {
-                    button.click();
+                    if (file.kind === "directory") {
+                        await nav(file.path);
+                    } else {
+                        await openfile();
+                    }
                     contextMenu.remove();
                 };
 
-                const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn');
+                const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn wide');
                 deleteButton.onclick = async () => {
                     await fs.rm(file.path);
+                    nav(currentPath);
                     contextMenu.remove();
                 };
             });
@@ -116,7 +129,7 @@ export async function launch(UI, fs, Scripts) {
     }
 
     document.addEventListener('keydown', async (e) => {
-        if ((e.ctrlKey && e.metaKey && e.key === 'n') && UI.focusedWindow === win.win) {
+        if ((e.shiftKey && e.metaKey && e.key === 'n') && UI.focusedWindow === win.win) {
             const win2 = await launch(UI, fs, Scripts);
             win2.window.win.style.left = (win.win.offsetLeft + 20) + "px";
             win2.window.win.style.top = (win.win.offsetTop + 20) + "px";

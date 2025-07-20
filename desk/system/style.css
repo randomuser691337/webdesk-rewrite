@@ -201,7 +201,7 @@ button {
     margin: 2px;
     transition: 0.04s ease-in-out;
     padding: 0px;
-    border: 1px solid rgba(var(--ui-accent), 0.22);
+    border: 1px solid rgba(var(--ui-accent), 0.45);
     overflow: hidden;
 }
 
@@ -215,7 +215,7 @@ button {
 
 .ui-main-btn-filler {
     /* background: radial-gradient(rgba(var(--ui-accent), 0.1), rgba(var(--ui-accent), 0.08)); */
-    background: rgba(var(--ui-accent), 0.1);
+    background: rgba(var(--ui-accent), 0.18);
     width: 100%;
     padding: 6px 8px;
     box-sizing: border-box;
@@ -223,7 +223,7 @@ button {
 }
 
 .ui-main-btn-filler:hover {
-    background: rgba(var(--ui-accent), 0.08);
+    background: rgba(var(--ui-accent), 0.15);
 }
 
 .ui-small-btn {
@@ -254,6 +254,14 @@ button {
 
 .ui-small-btn-filler:hover {
     background-color: rgba(var(--ui-accent), 0.15);
+}
+
+.accent-button {
+    width: 20px; height: 20px;
+    border-radius: 40485px;
+    border: none;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.2);
+    margin-right: 3px;
 }
 
 .wide {

@@ -34,7 +34,25 @@ export async function launch(UI, fs, Scripts) {
 
     function Personalize() {
         title.innerText = "Personalization";
-        
+        // Accent color buttons based off https://developer.apple.com/design/human-interface-guidelines/color
+        const colors = [
+            '0,122,255',   // Blue
+            '90,200,250',  // Light Blue
+            '52,199,89',   // Green
+            '255,204,0',   // Yellow
+            '255,149,0',   // Orange
+            '255,45,85',   // Red
+            '175,82,222'   // Purple
+        ];
+        content.innerHTML = '';
+        colors.forEach(color => {
+            const colorButton = UI.button(content, '', 'accent-button');
+            colorButton.style.backgroundColor = "rgb(" + color + ")";
+            colorButton.addEventListener('click', () => {
+                UI.changevar('ui-accent', color);
+                set.set('color', color);
+            });
+        });
     }
 
     win.updateWindow();
