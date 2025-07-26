@@ -1,4 +1,4 @@
-var wfs = new Worker('/wfs.js');
+var wfs = new Worker('/oldwfs.js');
 var fsloaded = false;
 const pendingRequests = {};
 let requestIdCounter = 0;

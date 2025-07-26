@@ -129,7 +129,7 @@ export async function launch(UI, fs, Scripts) {
     }
 
     document.addEventListener('keydown', async (e) => {
-        if ((e.shiftKey && e.metaKey && e.key === 'n') && UI.focusedWindow === win.win) {
+        if ((e.shiftKey && e.ctrlKey && e.key === 'n') && UI.focusedWindow === win.win) {
             const win2 = await launch(UI, fs, Scripts);
             win2.window.win.style.left = (win.win.offsetLeft + 20) + "px";
             win2.window.win.style.top = (win.win.offsetTop + 20) + "px";
@@ -182,7 +182,6 @@ export async function pickFile(UI, fs, Scripts) {
         sidebarcontent.style.flex = "1";
         sidebarcontent.style.overflow = "auto";
 
-
         win.header.innerHTML = "";
         UI.create('span', win.header, 'smalltxt').textContent = "Select a file";
         const cancelButton = UI.button(win.header, 'Cancel', 'ui-small-btn wide');
@@ -217,6 +216,7 @@ export async function pickFile(UI, fs, Scripts) {
 
                 breadcrumbs.push(button);
             });
+
             dir.forEach(function (file) {
                 let name;
                 if (file.kind === "directory") {

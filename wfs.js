@@ -48,7 +48,7 @@ const fs = {
         try {
             const fileHandle = await walkPath(path, { create: true, file: true });
             const writable = await fileHandle.createWritable();
-            if (filetype === "image") {
+            if (filetype === "blob") {
                 const blob = content instanceof Blob ? content : new Blob([content]);
                 await writable.write(blob);
             } else {

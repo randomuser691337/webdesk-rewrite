@@ -15,7 +15,7 @@
         - filetype: optional, defaults to "text"
             Valid types:
             - "text"  > stored as a UTF-8 string
-            - "image" > stored as a Blob
+            - "blob" > stored as a Blob
 
     - fs.erase(path)
         > Erases WebDesk.
@@ -24,7 +24,7 @@
     // Examples //
 
     fs.read("/notes/hello.txt").then(console.log);
-    fs.write("/wallpapers/bg.png", blob, "image");
+    fs.write("/wallpapers/bg.png", blob, "blob");
     fs.del("/old/meme.txt").then(() => console.log("Deleted."));
 */
 

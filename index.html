@@ -56,9 +56,9 @@
 
                     // Skip directories (either ends with '/' or is zero-length and has no extension)
                     if (name.endsWith('/') || (fileData.length === 0 && !name.includes('.'))) continue;
-                    const filetype = name.match(/\.(png|jpg|jpeg|gif)$/i) ? "image" : "text";
+                    const filetype = name.match(/\.(png|jpg|jpeg|gif)$/i) ? "blob" : "text";
                     let content;
-                    if (filetype === "image") {
+                    if (filetype === "blob") {
                         content = fileData;
                     } else {
                         content = new TextDecoder().decode(fileData);
@@ -96,5 +96,22 @@
     </script>
 </body>
 <script src="./fs.js"></script>
+<!--<script type="module">
+    import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+    console.log('Let there be LLMs');
+    const initProgressCallback = (progress) => {
+        console.log("Model loading progress:", progress);
+    };
+
+    // Using CreateMLCEngine
+    const engine = await CreateMLCEngine("TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC", { initProgressCallback });
+
+    // Direct instantiation
+    const engineInstance = new MLCEngine({ initProgressCallback });
+    await engineInstance.reload("TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC");
+</script>-->
+<script type="module">
+    
+</script>
 
 </html>

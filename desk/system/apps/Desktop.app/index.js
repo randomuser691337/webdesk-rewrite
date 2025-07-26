@@ -1,8 +1,11 @@
-(async function () {
+export async function launch(UI, fs, Scripts) {
     const taskbar = UI.create('div', document.body, 'taskbar');
     const left = UI.create('div', taskbar, 'window-header-nav');
     const right = UI.create('div', taskbar, 'window-header-text');
     const appBTN = UI.button(left, 'Apps', 'ui-main-btn');
+    const llmBTN = UI.button(left, '', 'ring-btn');
+    const contLLM = UI.create('div', llmBTN, 'waiting');
+    const ring = UI.create('div', contLLM, 'ring');
     const contBTN = UI.button(right, 'Controls', 'ui-main-btn');
 
     let currentMenu = {
@@ -65,6 +68,46 @@
         document.addEventListener('mousedown', handleOutsideClick);
     }
 
+    async function openLLMMenu() {
+        closeCurrentMenu();
+        let messages = []
+
+        const llmGo = await fs.read('/system/llm/prompt.txt');
+        messages.push({
+            content: llmGo,
+            role: "system"
+        });
+
+        const menu = UI.create('div', document.body, 'taskbar-menu');
+        menu.style.width = "300px";
+        menu.style.height = "500px";
+        const messagebox = UI.create('div', menu);
+        const layout = UI.leftRightLayout(menu);
+        const input = UI.create('input', layout.left, 'ui-main-input wide');
+        input.placeholder = "Ask Chloe anything...";
+        const btn = UI.button(layout.right, 'Send', 'ui-med-btn');
+
+        btn.addEventListener('click', async function () {
+            UI.text(messagebox, 'You: ' + input.value);
+            let llmResponseTxt = UI.text(messagebox, 'Chloe: ');
+            let llmResponse = "";
+            const response = await UI.sendToLLM(messages, input.value, function (token) {
+                llmResponse += token;
+                llmResponseTxt.innerText = "Chloe: " + llmResponse;
+            });
+
+            llmResponseTxt.innerText = "Chloe: " + response;
+        });
+
+        const taskrect = taskbar.getBoundingClientRect();
+        menu.style.left = taskrect.left + "px";
+        menu.style.bottom = taskrect.height + taskrect.left + taskrect.left + "px";
+
+        currentMenu.element = menu;
+        currentMenu.type = "llm";
+        document.addEventListener('mousedown', handleOutsideClick);
+    }
+
     async function openControlsMenu() {
         closeCurrentMenu();
 
@@ -78,7 +121,7 @@
                 const content = isImage ? file : await file.text();
 
                 try {
-                    await fs.write(path, content, isImage ? "image" : "text");
+                    await fs.write(path, content, isImage ? "blob" : "text");
                     const blob = await fs.read(path);
                     if (isImage && blob instanceof Blob) {
                         const img = document.createElement("img");
@@ -122,6 +165,14 @@
         }
     });
 
+    llmBTN.addEventListener('click', async () => {
+        if (currentMenu.type === "llm") {
+            closeCurrentMenu();
+        } else {
+            await openLLMMenu();
+        }
+    });
+
     contBTN.addEventListener('click', async () => {
         if (currentMenu.type === "controls") {
             closeCurrentMenu();
@@ -137,4 +188,5 @@
     } else {
         console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
     }
-})();
+    return ring;
+}

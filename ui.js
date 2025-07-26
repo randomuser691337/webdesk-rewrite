@@ -15,10 +15,26 @@ var UI = {
         } else if (typeof classname === "string" && classname.includes("ui-small-btn")) {
             const txt = this.create("div", btn, "ui-small-btn-filler");
             txt.textContent = text;
+        } else if (typeof classname === "string" && classname.includes("ui-med-btn")) {
+            const txt = this.create("div", btn, "ui-med-btn-filler");
+            txt.textContent = text;
         } else {
             btn.textContent = text;
         }
         return btn;
+    },
+    sendToLLM: async function (messages, userContent, token) {
+        try {
+            const result = await sys.LLM.send(messages, userContent, token);
+            if (result && result.responseMessage) {
+                return result.responseMessage;
+            } else {
+                throw new Error("<!> No response from LLM");
+            }
+        } catch (error) {
+            console.error("<!> Error sending to LLM:", error);
+            throw new Error("Error sending to LLM");
+        }
     },
     text: function (parent, text, classname) {
         var txt = this.create("p", parent, classname);
@@ -103,8 +119,8 @@ var UI = {
     changevar: function (varname, value) {
         document.documentElement.style.setProperty(`--${varname}`, value);
     },
-    remove: function (div) {
-        div.remove();
+    remove: function (element) {
+        element.remove();
     },
     truncate: function (text, maxLength, ellipsis = true) {
         if (text.length <= maxLength) return text;
@@ -125,5 +141,58 @@ var UI = {
 
         return menu;
     },
+    line: function (parent) {
+        UI.create('div', parent, 'group-line');
+    },
+    leftRightLayout: function (parent) {
+        const container = this.create('div', parent, 'flexbox');
+        const left = this.create('div', container, 'flexbox-left');
+        const right = this.create('div', container, 'flexbox-right');
+        return { left, right };
+    },
     focusedWindow: undefined,
+    System: {
+        darkMode: function () {
+            UI.changevar('bg-ui-primary', '30, 30, 30');
+            UI.changevar('ui-secondary', '50, 50, 50');
+            UI.changevar('text', '#fff');
+        },
+        lightMode: function () {
+            UI.changevar('bg-ui-primary', '255, 255, 255');
+            UI.changevar('ui-secondary', '240, 240, 240');
+            UI.changevar('text', '#000');
+        },
+        llmRing: function (state) {
+            const ring = document.querySelector('.ring');
+            if (ring) {
+                if (state === 'waiting') {
+                    ring.style.setProperty('--color-start', '#08f');
+                    ring.style.setProperty('--color-end', '#00f');
+                    ring.style.setProperty('--speed', '4s');
+                } else if (state === 'thinking') {
+                    ring.style.setProperty('--color-start', '#fe0');
+                    ring.style.setProperty('--color-end', '#fb0');
+                    ring.style.setProperty('--speed', '2.5s');
+                } else if (state === 'disabled') {
+                    ring.style.setProperty('--color-start', '#999');
+                    ring.style.setProperty('--color-end', '#999');
+                    ring.style.setProperty('--speed', '2.5s');
+                } else if (state === 'error') {
+                    ring.style.setProperty('--color-start', '#f00');
+                    ring.style.setProperty('--color-end', '#f00');
+                    setTimeout(() => {
+                        ring.style.setProperty('--color-start', 'rgb(0, 0, 0, 0)');
+                        ring.style.setProperty('--color-end', 'rgb(0, 0, 0, 0)');
+                        setTimeout(() => {
+                            ring.style.setProperty('--color-start', '#f00');
+                            ring.style.setProperty('--color-end', '#f00');
+                            setTimeout(() => {
+                                UI.System.llmRing('waiting');
+                            }, 200);
+                        }, 200);
+                    }, 200);
+                }
+            }
+        }
+    }
 }
