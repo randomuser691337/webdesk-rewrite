@@ -38,7 +38,7 @@ function gen(min, max) {
 
 var currentops = []
 
-var fs = {
+fs = {
     read: function (path) {
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {

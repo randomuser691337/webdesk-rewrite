@@ -174,7 +174,7 @@ button {
 }
 
 .close-btn:active {
-    filter: brightness(1.2);
+    filter: brightness(1.1);
 }
 
 .min-btn {

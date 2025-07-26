@@ -229,12 +229,13 @@ var fs2 = {
 
             const item = { path: path, data: content };
             const request = objectStore.put(item);
-            const yeah = fs2.date(path);
-            if (!yeah.created) {
-                fs2.dwrite(path, true, true);
-            } else {
-                fs2.dwrite(path, false, true);
-            }
+            fs2.date(path).then(yeah => {
+                if (!yeah.created) {
+                    fs2.dwrite(path, true, true);
+                } else {
+                    fs2.dwrite(path, false, true);
+                }
+            });
             request.onsuccess = function () {
                 resolve();
             };

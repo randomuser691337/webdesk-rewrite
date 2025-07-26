@@ -15,6 +15,10 @@ wfs.onmessage = function (event) {
             case 'db_ready':
                 fsloaded = true;
                 console.log(`<i> Old WFS loaded`);
+                if (!fs) {
+                    fs = fs2;
+                    boot();
+                }
                 break;
             case 'reboot':
                 try {

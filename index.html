@@ -10,6 +10,7 @@
 <body>
     <script src="./ui.js"></script>
     <script>
+        var fs;
         var Scripts = {
             loadJS: async function (path) {
                 console.log('<i> Initializing ' + path)
@@ -48,33 +49,38 @@
             scri.type = "module";
             scri.textContent = `import { unzipSync } from "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js";
             async function extractZipToOPFS(zipFile) {
-                const buffer = new Uint8Array(await zipFile.arrayBuffer());
-                const files = unzipSync(buffer);
+                const checkIfExist = await set.read('');
+                if (checkIfExist === "true") {
+                    console.log('Not updating. User set it to not');
+                } else {
+                    const buffer = new Uint8Array(await zipFile.arrayBuffer());
+                    const files = unzipSync(buffer);
 
-                for (const name in files) {
-                    const fileData = files[name];
+                    for (const name in files) {
+                        const fileData = files[name];
 
-                    // Skip directories (either ends with '/' or is zero-length and has no extension)
-                    if (name.endsWith('/') || (fileData.length === 0 && !name.includes('.'))) continue;
-                    const filetype = name.match(/\.(png|jpg|jpeg|gif)$/i) ? "blob" : "text";
-                    let content;
-                    if (filetype === "blob") {
-                        content = fileData;
-                    } else {
-                        content = new TextDecoder().decode(fileData);
+                        // Skip directories (either ends with '/' or is zero-length and has no extension)
+                        if (name.endsWith('/') || (fileData.length === 0 && !name.includes('.'))) continue;
+                        const filetype = name.match(/\.(png|jpg|jpeg|gif)$/i) ? "blob" : "text";
+                        let content;
+                        if (filetype === "blob") {
+                            content = fileData;
+                        } else {
+                            content = new TextDecoder().decode(fileData);
+                        }
+                        console.log(name, fileData);
+                        await fs.write('/' + name, content, filetype);
+                        console.log(fileData);
+                        if (name.startsWith('apps/') && name.endsWith('index.js')) {
+                            const parts = name.split('/');
+                            let lastdir = parts[parts.length - 2];
+                            lastdir = lastdir.replace('.app', '');
+                            await fs.write('/system/apps/Desktop.app/Items/' + lastdir, '/' + name, filetype);
+                        }
                     }
-                    console.log(name, fileData);
-                    await fs.write('/' + name, content, filetype);
-                    console.log(fileData);
-                    if (name.startsWith('apps/') && name.endsWith('index.js')) {
-                        const parts = name.split('/');
-                        let lastdir = parts[parts.length - 2];
-                        lastdir = lastdir.replace('.app', '');
-                        await fs.write('/system/apps/Desktop.app/Items/' + lastdir, '/' + name, filetype);
-                    }
+
+                    console.log("ZIP extracted to OPFS. Handing control to init.js."); 
                 }
-
-                console.log("ZIP extracted to OPFS. Handing control to init.js.");
                 
                 Scripts.loadJS('/system/init.js');
             }
@@ -95,7 +101,32 @@
         console.log('<i> launching files beta');
     </script>
 </body>
-<script src="./fs.js"></script>
+<script>
+    (async () => {
+        let isOPFSSupported = false;
+
+        if ('storage' in navigator && 'getDirectory' in navigator.storage) {
+            try {
+                const root = await navigator.storage.getDirectory();
+                const file = await root.getFileHandle('test.txt', { create: true });
+                const writer = await file.createWritable();
+                await writer.write('test');
+                await writer.close();
+                await root.removeEntry('test.txt');
+                isOPFSSupported = true;
+            } catch (e) {
+                console.warn("OPFS write test failed:", e);
+                isOPFSSupported = false;
+            }
+        }
+
+        console.log("OPFS supported?", isOPFSSupported);
+
+        const script = document.createElement('script');
+        script.src = isOPFSSupported ? "./fs.js" : "./oldfs.js";
+        document.body.appendChild(script);
+    })();
+</script>
 <!--<script type="module">
     import * as webllm from "https://esm.run/@mlc-ai/web-llm";
     console.log('Let there be LLMs');
@@ -111,7 +142,7 @@
     await engineInstance.reload("TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC");
 </script>-->
 <script type="module">
-    
+
 </script>
 
 </html>
