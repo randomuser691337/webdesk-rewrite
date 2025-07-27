@@ -24,6 +24,7 @@ UI functions:
       - Creates a draggable window with header, content area, and control buttons.
       - title: Window title
       - Returns: { win, header, content, headertxt, headerbtns, buttons, updateWindow }
+      - To add text to the content of a window: UI.text(win.content, "Hello, World!")
 
     - UI.img(parent, path, classname)
       - Loads an image from a file path and appends it to the parent.

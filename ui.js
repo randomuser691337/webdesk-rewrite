@@ -189,7 +189,7 @@ var UI = {
                             setTimeout(() => {
                                 UI.System.llmRing('waiting');
                             }, 200);
-                        }, 200);
+                        }, 170);
                     }, 200);
                 }
             }

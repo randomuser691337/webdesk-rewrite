@@ -90,7 +90,7 @@ worker.addEventListener("message", (msg) => {
     });
 });
 
-var set = {
+set = {
     async ensureConfigLoaded() {
         if (!sys.config) {
             try {

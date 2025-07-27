@@ -80,8 +80,9 @@ export async function launch(UI, fs, Scripts) {
 
         const menu = UI.create('div', document.body, 'taskbar-menu');
         menu.style.width = "300px";
-        menu.style.height = "500px";
         const messagebox = UI.create('div', menu);
+        messagebox.style.height = "400px";
+        messagebox.style.overflow = "auto";
         const layout = UI.leftRightLayout(menu);
         const input = UI.create('input', layout.left, 'ui-main-input wide');
         input.placeholder = "Ask Chloe anything...";

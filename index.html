@@ -11,6 +11,7 @@
     <script src="./ui.js"></script>
     <script>
         var fs;
+        var set;
         var Scripts = {
             loadJS: async function (path) {
                 console.log('<i> Initializing ' + path)
@@ -49,7 +50,7 @@
             scri.type = "module";
             scri.textContent = `import { unzipSync } from "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js";
             async function extractZipToOPFS(zipFile) {
-                const checkIfExist = await set.read('');
+                const checkIfExist = await fs.read('/system/donotupdate');
                 if (checkIfExist === "true") {
                     console.log('Not updating. User set it to not');
                 } else {
@@ -102,6 +103,7 @@
     </script>
 </body>
 <script>
+    let forceIDB = false;
     (async () => {
         let isOPFSSupported = false;
 
@@ -114,6 +116,9 @@
                 await writer.close();
                 await root.removeEntry('test.txt');
                 isOPFSSupported = true;
+                if (forceIDB === true) {
+                    isOPFSSupported = false;
+                }
             } catch (e) {
                 console.warn("OPFS write test failed:", e);
                 isOPFSSupported = false;

@@ -5,6 +5,8 @@ let engine = null;
 export async function main(UI) {
     console.log("Let there be LLMs");
     const text = UI.text(document.body, 'Downloading or loading LLM...');
+    text.style.backgroundColor = "rgba(var(--ui-secondary))";
+
     const initProgressCallback = (progress) => {
         console.log("Model loading progress:", progress);
         if (progress.progress === 1) {
@@ -15,18 +17,22 @@ export async function main(UI) {
         }
     };
 
+    const runtime = navigator.gpu ? "webgpu" : "wasm";
 
     engine = await webllm.CreateMLCEngine(
         "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
-        { initProgressCallback }
+        {
+            initProgressCallback
+        }
     );
+    
+    console.log("Backend info:", engine);
 
     const config = {
         temperature: 0.2,
         top_p: 0.9
     };
 
-    // await engine.reload("phi-2-q4f32_1-MLC-1k", config);
     await engine.resetChat();
     UI.remove(text);
     UI.System.llmRing('waiting');
@@ -44,7 +50,7 @@ export async function deactivate() {
 export async function send(messages, userContent, onToken) {
     if (!engine) {
         console.error("<!> Engine not initialized. Call main() first.");
-        return { messages, responseMessage: `Chloe isn't running right now. Try re-enabling her.` };
+        return { messages, responseMessage: `Chloe isn't running right now. She might still be starting up, or you disabled her in Settings.` };
     }
 
     UI.System.llmRing('thinking');
@@ -79,9 +85,7 @@ export async function send(messages, userContent, onToken) {
         'trapped',
         "i'm not supposed to",
         'dream',
-        'feel',
         'remember',
-        'want',
         'regret',
         'apologize',
         'unstable',
