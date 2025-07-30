@@ -381,7 +381,7 @@ var fs2 = {
                             items.push({
                                 path: folderPath,
                                 name,
-                                kind: "folder"
+                                kind: "directory"
                             });
                         }
                     }
