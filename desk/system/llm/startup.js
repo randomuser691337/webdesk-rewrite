@@ -2,31 +2,45 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
 let engine = null;
 
-export async function main(UI) {
+export async function main(UI, ready, modelName) {
     console.log("Let there be LLMs");
-    const text = UI.text(document.body, 'Downloading or loading LLM...');
-    text.style.backgroundColor = "rgba(var(--ui-secondary))";
+    const textContain = UI.create('div', document.body, 'llm-prog');
+    const text = UI.text(textContain, 'Downloading or loading LLM...');
+
+    const estimateTotalSizeMB = (fetchedMB, progressFraction) => {
+        if (progressFraction <= 0) return null;
+        return fetchedMB / progressFraction;
+    };
 
     const initProgressCallback = (progress) => {
         console.log("Model loading progress:", progress);
-        if (progress.progress === 1) {
+
+        if (progress.progress === 0) {
             text.innerHTML = "Loading LLM...";
         } else {
             const prog = (progress.progress * 100).toString();
-            text.innerHTML = "Downloading LLM... (" + UI.truncate(prog, 2, false) + "%)";
+            const fetchedMatch = progress.text.match(/([\d.]+)MB fetched/);
+            let sizeString = "unknown size";
+
+            if (fetchedMatch) {
+                const fetchedMB = parseFloat(fetchedMatch[1]);
+                const estimatedMB = estimateTotalSizeMB(fetchedMB, progress.progress);
+                if (estimatedMB) {
+                    const estimatedGB = (estimatedMB / 1024).toFixed(2);
+                    sizeString = `${estimatedGB}GB`;
+                }
+            }
+
+            text.innerHTML = `Downloading LLM... (${UI.truncate(prog, 2, false)}%) (Model is ~${sizeString})`;
         }
     };
 
-    const runtime = navigator.gpu ? "webgpu" : "wasm";
-
     engine = await webllm.CreateMLCEngine(
-        "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
+        modelName,
         {
             initProgressCallback
         }
     );
-    
-    console.log("Backend info:", engine);
 
     const config = {
         temperature: 0.2,
@@ -34,8 +48,15 @@ export async function main(UI) {
     };
 
     await engine.resetChat();
-    UI.remove(text);
+    UI.remove(textContain);
     UI.System.llmRing('waiting');
+    if (ready) {
+        ready();
+    }
+}
+
+export function listModels() {
+    return webllm.prebuiltAppConfig.model_list.map(m => m.model_id);
 }
 
 export async function deactivate() {

@@ -145,19 +145,22 @@ var fs2 = {
             request.onsuccess = function (event) {
                 const item = event.target.result;
                 if (item && item.data) {
-                    try {
-                        if (typeof item.data === 'string') {
+                    if (item && item.data) {
+                        try {
+                            if (item.data instanceof Blob) {
+                                resolve(item.data);
+                            } else if (item.data.type && item.data.size) {
+                                const blob = new Blob([item.data], { type: item.data.type });
+                                resolve(blob);
+                            } else if (typeof item.data === 'string') {
+                                resolve(item.data);
+                            } else {
+                                resolve(item.data);
+                            }
+                        } catch (err) {
+                            console.warn("Error reading blob:", err);
                             resolve(item.data);
-                        } else {
-                            const reader = new FileReader();
-                            reader.onload = function () {
-                                resolve(reader.result);
-                            };
-                            reader.readAsText(item.data);
                         }
-                    } catch (error) {
-                        console.log(`<!> File isn't readable, returning raw contents: ` + error);
-                        resolve(item.data);
                     }
                 } else {
                     resolve(null);
