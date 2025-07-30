@@ -104,8 +104,8 @@
 </body>
 <script>
     let forceIDB = false;
+    var isOPFSSupported = false;
     (async () => {
-        let isOPFSSupported = false;
 
         if ('storage' in navigator && 'getDirectory' in navigator.storage) {
             try {
