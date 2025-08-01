@@ -35,6 +35,8 @@ export async function launch(UI, fs, Scripts) {
     let dir;
     async function nav(path) {
         dir = await fs.ls(path);
+        console.log(path);
+        console.log(dir);
         filelist.innerHTML = "";
         crumbs.innerHTML = "";
         const buttonhome = UI.button(crumbs, '/', 'ui-small-btn');
@@ -53,7 +55,11 @@ export async function launch(UI, fs, Scripts) {
 
             const button = UI.button(crumbs, part, 'ui-small-btn');
             button.onclick = () => {
-                nav(crumbPath);
+                if (crumbPath.endsWith('/')) {
+                    nav(crumbPath);
+                } else {
+                    nav(crumbPath + "/");
+                }
             };
 
             breadcrumbs.push(button);
@@ -67,7 +73,7 @@ export async function launch(UI, fs, Scripts) {
             }
 
             async function openfile() {
-                if (file.kind === "directory" && file.path.endsWith('.app')) {
+                if (file.kind === "directory" && (file.path.endsWith('.app') || file.path.endsWith('.app'))) {
                     const code = await fs.read(file.path + '/index.js');
                     const mod = await Scripts.loadModule(code);
                     await mod.launch(UI, fs, Scripts, true);

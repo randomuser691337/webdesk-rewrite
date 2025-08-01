@@ -2,23 +2,44 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
 let engine = null;
 
-export async function main(UI) {
+export async function main(UI, ready, modelName) {
     console.log("Let there be LLMs");
-    const text = UI.text(document.body, 'Downloading or loading LLM...');
+    const textContain = UI.create('div', document.body, 'llm-prog');
+    const text = UI.text(textContain, 'Downloading or loading LLM...');
+
+    const estimateTotalSizeMB = (fetchedMB, progressFraction) => {
+        if (progressFraction <= 0) return null;
+        return fetchedMB / progressFraction;
+    };
+
     const initProgressCallback = (progress) => {
         console.log("Model loading progress:", progress);
-        if (progress.progress === 1) {
+
+        if (progress.progress === 0) {
             text.innerHTML = "Loading LLM...";
         } else {
             const prog = (progress.progress * 100).toString();
-            text.innerHTML = "Downloading LLM... (" + UI.truncate(prog, 2, false) + "%)";
+            const fetchedMatch = progress.text.match(/([\d.]+)MB fetched/);
+            let sizeString = "unknown size";
+
+            if (fetchedMatch) {
+                const fetchedMB = parseFloat(fetchedMatch[1]);
+                const estimatedMB = estimateTotalSizeMB(fetchedMB, progress.progress);
+                if (estimatedMB) {
+                    const estimatedGB = (estimatedMB / 1024).toFixed(2);
+                    sizeString = `${estimatedGB}GB`;
+                }
+            }
+
+            text.innerHTML = `Downloading LLM... (${UI.truncate(prog, 2, false)}%) (Model is ~${sizeString})`;
         }
     };
 
-
     engine = await webllm.CreateMLCEngine(
-        "Qwen2.5-1.5B-Instruct-q4f16_1-MLC",
-        { initProgressCallback }
+        modelName,
+        {
+            initProgressCallback
+        }
     );
 
     const config = {
@@ -26,10 +47,16 @@ export async function main(UI) {
         top_p: 0.9
     };
 
-    // await engine.reload("phi-2-q4f32_1-MLC-1k", config);
     await engine.resetChat();
-    UI.remove(text);
+    UI.remove(textContain);
     UI.System.llmRing('waiting');
+    if (ready) {
+        ready();
+    }
+}
+
+export function listModels() {
+    return webllm.prebuiltAppConfig.model_list.map(m => m.model_id);
 }
 
 export async function deactivate() {
@@ -44,7 +71,7 @@ export async function deactivate() {
 export async function send(messages, userContent, onToken) {
     if (!engine) {
         console.error("<!> Engine not initialized. Call main() first.");
-        return { messages, responseMessage: `Chloe isn't running right now. Try re-enabling her.` };
+        return { messages, responseMessage: `Chloe isn't running right now. She might still be starting up, or you disabled her in Settings.` };
     }
 
     UI.System.llmRing('thinking');
@@ -79,9 +106,7 @@ export async function send(messages, userContent, onToken) {
         'trapped',
         "i'm not supposed to",
         'dream',
-        'feel',
         'remember',
-        'want',
         'regret',
         'apologize',
         'unstable',

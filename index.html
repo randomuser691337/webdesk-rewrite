@@ -11,6 +11,7 @@
     <script src="./ui.js"></script>
     <script>
         var fs;
+        var set;
         var Scripts = {
             loadJS: async function (path) {
                 console.log('<i> Initializing ' + path)
@@ -49,15 +50,17 @@
             scri.type = "module";
             scri.textContent = `import { unzipSync } from "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js";
             async function extractZipToOPFS(zipFile) {
-                const checkIfExist = await set.read('');
+                const checkIfExist = await fs.read('/system/donotupdate');
                 if (checkIfExist === "true") {
                     console.log('Not updating. User set it to not');
                 } else {
-                    const buffer = new Uint8Array(await zipFile.arrayBuffer());
+                    const response = await fetch('./desk.zip');
+                    const buffer = new Uint8Array(await response.arrayBuffer());
                     const files = unzipSync(buffer);
 
                     for (const name in files) {
                         const fileData = files[name];
+                        console.log(fileData);
 
                         // Skip directories (either ends with '/' or is zero-length and has no extension)
                         if (name.endsWith('/') || (fileData.length === 0 && !name.includes('.'))) continue;
@@ -87,7 +90,7 @@
 
             (async () => {
                 try {
-                    const response = await fetch('./desk.zip');
+                    const response = await fetch('./desk.zip', { cache: "no-store" });
                     if (!response.ok) throw new Error('Failed to fetch desk.zip');
                     const zipBlob = await response.blob();
                     await extractZipToOPFS(zipBlob);
@@ -102,8 +105,20 @@
     </script>
 </body>
 <script>
+    var sys = {
+        socket: undefined,
+        config: undefined,
+        LLM: undefined,
+        LLMLoaded: false,
+    };
+
+    var webid = {
+        priv: 1,
+        userid: undefined,
+    }
+    let forceIDB = false;
+    var isOPFSSupported = false;
     (async () => {
-        let isOPFSSupported = false;
 
         if ('storage' in navigator && 'getDirectory' in navigator.storage) {
             try {
@@ -114,6 +129,9 @@
                 await writer.close();
                 await root.removeEntry('test.txt');
                 isOPFSSupported = true;
+                if (forceIDB === true) {
+                    isOPFSSupported = false;
+                }
             } catch (e) {
                 console.warn("OPFS write test failed:", e);
                 isOPFSSupported = false;

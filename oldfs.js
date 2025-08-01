@@ -17,6 +17,7 @@ wfs.onmessage = function (event) {
                 console.log(`<i> Old WFS loaded`);
                 if (!fs) {
                     fs = fs2;
+                    set = set2;
                     boot();
                 }
                 break;
@@ -40,11 +41,12 @@ var fs2 = {
     send(message, transferList) {
         wfs.postMessage(message, transferList);
     },
-    askwfs(operation, params, opt) {
+    askwfs(operation, params, opt, filetype) {
         const requestId = requestIdCounter++;
         return new Promise((resolve, reject) => {
             pendingRequests[requestId] = { resolve, reject };
-            const message = { type: 'fs', operation, params, opt, requestId };
+            if (!params.startsWith('/')) params = "/" + params;
+            const message = { type: 'fs', operation, params, opt, requestId, filetype };
             const transferList = operation === 'write' && opt instanceof ArrayBuffer ? [opt] : undefined;
             this.send(message, transferList);
         });
@@ -55,12 +57,12 @@ var fs2 = {
     read(path) {
         return this.askwfs('read', path);
     },
-    write(path, data) {
+    write(path, data, filetype) {
         if (path.endsWith('/')) {
             wm.notif('Bad file write', `Remove "/" from the end of your path name.`);
             return Promise.reject('Invalid path');
         }
-        return this.askwfs('write', path, data);
+        return this.askwfs('write', path, data, filetype);
     },
     del(path) {
         return this.askwfs('delete', path);
@@ -124,4 +126,49 @@ var fs2 = {
     usedspace() {
         return this.askwfs('space');
     },
+};
+
+
+var set2 = {
+    async ensureConfigLoaded() {
+        if (!sys.config) {
+            try {
+                const raw = await fs.read("/user/info/config.json");
+                if (!raw) {
+                    sys.config = {};
+                    return;
+                }
+                sys.config = JSON.parse(raw);
+                console.log(sys.config);
+            } catch (e) {
+                sys.config = {};
+            }
+        }
+    },
+    async set(key, value) {
+        try {
+            await this.ensureConfigLoaded();
+            sys.config[key] = value;
+            await fs.write("/user/info/config.json", JSON.stringify(sys.config));
+            return true;
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+    },
+    async del(key) {
+        try {
+            await this.ensureConfigLoaded();
+            delete sys.config[key];
+            await fs.write("/user/info/config.json", JSON.stringify(sys.config));
+            return true;
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+    },
+    async read(key) {
+        await this.ensureConfigLoaded();
+        return sys.config[key];
+    }
 };

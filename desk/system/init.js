@@ -1,31 +1,22 @@
-var sys = {
-    socket: undefined,
-    config: undefined,
-    LLM: undefined,
-};
-
-var webid = {
-    priv: 1,
-    userid: undefined,
-}
-
 Scripts.loadCSS('/system/style.css');
 Scripts.loadJS('/system/core.js');
 Scripts.loadJS('/system/lib/socket.io.js');
 (async function () {
     const desktop = await fs.read('/system/apps/Desktop.app/index.js');
     Scripts.loadModule(desktop).then(async (mod) => {
+        if (('gpu' in navigator)) {
+            if (await set.read('chloe') !== "deactivated") {
+                wd.startLLM();
+            }
+        } else {
+            sys.LLMLoaded = "unsupported";
+        }
         mod.launch(UI, fs, Scripts);
-        const ai = await fs.read('/system/llm/startup.js');
-        Scripts.loadModule(ai).then(async (mod) => {
-            mod.main(UI);
-            sys.LLM = mod;
-        });
     });
     const acc = await set.read('accent');
     if (acc) UI.changevar('ui-accent', acc);
     const appear = await set.read('appearance');
-    if (appear === "dark") SystemUI.darkMode();
+    if (appear === "dark") UI.System.darkMode();
 })();
 
 async function startsockets() {

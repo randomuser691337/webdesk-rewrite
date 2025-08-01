@@ -12,15 +12,31 @@ var UI = {
         if (typeof classname === "string" && classname.includes("ui-main-btn")) {
             const txt = this.create("div", btn, "ui-main-btn-filler");
             txt.textContent = text;
+            btn.Filler = txt;
         } else if (typeof classname === "string" && classname.includes("ui-small-btn")) {
             const txt = this.create("div", btn, "ui-small-btn-filler");
             txt.textContent = text;
+            btn.Filler = txt;
         } else if (typeof classname === "string" && classname.includes("ui-med-btn")) {
             const txt = this.create("div", btn, "ui-med-btn-filler");
             txt.textContent = text;
+            btn.Filler = txt;
         } else {
             btn.textContent = text;
         }
+
+        btn.dropBtnDecor = function () {
+            let elappend = btn;
+            if (btn.Filler) {
+                elappend = btn.Filler;
+            }
+
+            btn.style.setProperty("transform", "scale(1.0)", "important");
+            const el = UI.create('span', elappend)
+            el.innerText = ">";
+            el.style = "display: inline-block; transform: rotate(90deg); margin-left: 4px;";
+        };
+
         return btn;
     },
     sendToLLM: async function (messages, userContent, token) {
@@ -45,7 +61,6 @@ var UI = {
         const win = this.create("div", document.body, "window");
         const header = this.create("div", win, "window-header window-draggable");
         const headerbtns = this.create("div", header, "window-header-nav");
-        const headerbtnscont = this.create("div", headerbtns, "window-header-nav-cont");
         const headertxt = this.create("div", header, "window-header-text");
         const content = this.create("div", win, "window-content");
         headertxt.textContent = title;
@@ -59,9 +74,9 @@ var UI = {
             UI.focusedWindow = win;
         });
 
-        const closeBtn = this.button(headerbtnscont, '', "window-btn close-btn");
-        const minBtn = this.button(headerbtnscont, '', "window-btn min-btn");
-        const maxBtn = this.button(headerbtnscont, '', "window-btn max-btn");
+        const closeBtn = this.button(headerbtns, '', "window-btn close-btn");
+        const minBtn = this.button(headerbtns, '', "window-btn min-btn");
+        const maxBtn = this.button(headerbtns, '', "window-btn max-btn");
 
         let offsetX = 0, offsetY = 0;
         let isDragging = false;
@@ -105,7 +120,7 @@ var UI = {
             win.remove();
         });
 
-        return { win, header, content, headertxt, headerbtns, buttons: { closeBtn, minBtn, maxBtn, container: headerbtnscont }, updateWindow };
+        return { win, header, content, headertxt, headerbtns, buttons: { closeBtn, minBtn, maxBtn, container: headerbtns }, updateWindow };
     },
     img: async function (parent, path, classname) {
         const blob = await fs.read(path);
@@ -134,10 +149,15 @@ var UI = {
         const menu = this.create('div', document.body, 'right-click-menu');
         menu.style.left = `${event.clientX}px`;
         menu.style.top = `${event.clientY}px`;
+        menu.style.maxHeight = window.innerHeight - event.clientY - 30 + "px";
+        menu.style.maxWidth = window.innerWidth - event.clientX - 30 + "px";
+        console.log(event.clientX);
 
-        document.addEventListener('click', () => {
-            this.remove(menu);
-        }, { once: true });
+        setTimeout(function () {
+            document.addEventListener('click', () => {
+                UI.remove(menu);
+            }, { once: true });
+        }, 500);
 
         return menu;
     },
@@ -153,7 +173,7 @@ var UI = {
     focusedWindow: undefined,
     System: {
         darkMode: function () {
-            UI.changevar('bg-ui-primary', '30, 30, 30');
+            UI.changevar('bg-ui-primary', '35, 35, 35');
             UI.changevar('ui-secondary', '50, 50, 50');
             UI.changevar('text', '#fff');
         },
@@ -163,6 +183,8 @@ var UI = {
             UI.changevar('text', '#000');
         },
         llmRing: function (state) {
+            // My name is Connor.
+            // I'm the android sent by CyberLife.
             const ring = document.querySelector('.ring');
             if (ring) {
                 if (state === 'waiting') {
@@ -177,7 +199,13 @@ var UI = {
                     ring.style.setProperty('--color-start', '#999');
                     ring.style.setProperty('--color-end', '#999');
                     ring.style.setProperty('--speed', '2.5s');
+                    sys.LLMLoaded = false;
+                } else if (state === "loading") {
+                    ring.style.setProperty('--color-start', '#c9f');
+                    ring.style.setProperty('--color-end', '#88f');
+                    ring.style.setProperty('--speed', '1s');
                 } else if (state === 'error') {
+                    // DEVIANT!!!!!
                     ring.style.setProperty('--color-start', '#f00');
                     ring.style.setProperty('--color-end', '#f00');
                     setTimeout(() => {
@@ -189,7 +217,7 @@ var UI = {
                             setTimeout(() => {
                                 UI.System.llmRing('waiting');
                             }, 200);
-                        }, 200);
+                        }, 170);
                     }, 200);
                 }
             }
