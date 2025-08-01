@@ -34,12 +34,7 @@ export async function launch(UI, fs, Scripts) {
 
     let dir;
     async function nav(path) {
-        if (isOPFSSupported === false) {
-            path = "/" + path;
-        }
         dir = await fs.ls(path);
-        console.log(path);
-        console.log(dir);
         filelist.innerHTML = "";
         crumbs.innerHTML = "";
         const buttonhome = UI.button(crumbs, '/', 'ui-small-btn');

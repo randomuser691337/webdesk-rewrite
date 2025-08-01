@@ -31,13 +31,13 @@ request.onupgradeneeded = function (event) {
 };
 
 self.onmessage = async function (event) {
-    const { type, operation, params, opt, requestId, filetype } = event.data;
+    const { type, operation, params, opt, requestId } = event.data;
     if (type === 'fs') {
-        await idbop(operation, params, opt, requestId, filetype);
+        await idbop(operation, params, opt, requestId);
     }
 };
 
-async function idbop(operation, params, opt, requestId, filetype) {
+async function idbop(operation, params, opt, requestId) {
     if ((typeof params === 'string' && params.includes('//'))) {
         self.postMessage({ type: 'result', data: null, requestId });
         console.error(`FS request contains //, which screws things up. Data has been returned as null. Params: ${params}`);
@@ -70,7 +70,7 @@ async function idbop(operation, params, opt, requestId, filetype) {
                 });
             break;
         case 'write':
-            fs2.write(params, opt, filetype)
+            fs2.write(params, opt)
                 .then(() => {
                     self.postMessage({ type: 'result', data: true, requestId });
                 })
@@ -145,22 +145,19 @@ var fs2 = {
             request.onsuccess = function (event) {
                 const item = event.target.result;
                 if (item && item.data) {
-                    if (item && item.data) {
-                        try {
-                            if (item.data instanceof Blob) {
-                                resolve(item.data);
-                            } else if (item.data.type && item.data.size) {
-                                const blob = new Blob([item.data], { type: item.data.type });
-                                resolve(blob);
-                            } else if (typeof item.data === 'string') {
-                                resolve(item.data);
-                            } else {
-                                resolve(item.data);
-                            }
-                        } catch (err) {
-                            console.warn("Error reading blob:", err);
+                    try {
+                        if (typeof item.data === 'string') {
                             resolve(item.data);
+                        } else {
+                            const reader = new FileReader();
+                            reader.onload = function () {
+                                resolve(reader.result);
+                            };
+                            reader.readAsText(item.data);
                         }
+                    } catch (error) {
+                        console.log(`<!> File isn't readable, returning raw contents: ` + error);
+                        resolve(item.data);
                     }
                 } else {
                     resolve(null);
@@ -213,21 +210,21 @@ var fs2 = {
             };
         });
     },
-    write: async function (path, data, filetype) {
+    write: async function (path, data) {
         if (path.includes('/webdeskmetadata')) {
             reject('Forbidden');
         }
-
         return new Promise((resolve, reject) => {
             const transaction = db.transaction(['main'], 'readwrite');
             const objectStore = transaction.objectStore('main');
             let content;
 
-            if (filetype === "blob") {
-                const blob = data instanceof Blob ? data : new Blob([data]);
-                content = blob;
+            if (typeof data === 'string') {
+                content = data;
+            } else if (typeof data === 'object') {
+                content = JSON.stringify(data);
             } else {
-                content = typeof data === "string" ? data : data.toString();
+                content = new Blob([data]);
             }
 
             const item = { path: path, data: content };
@@ -358,45 +355,25 @@ var fs2 = {
         return new Promise((resolve, reject) => {
             const transaction = db.transaction(['main'], 'readonly');
             const objectStore = transaction.objectStore('main');
-            const items = [];
-            const seen = new Set();
+            const items = new Map();
 
             objectStore.getAllKeys().onsuccess = function (event) {
                 const keys = event.target.result;
+                keys.forEach(key => {
+                    if (key.startsWith(path)) {
+                        const relativePath = key.substring(path.length);
+                        const parts = relativePath.split('/');
 
-                for (const key of keys) {
-                    if (!key.startsWith(path)) continue;
-
-                    const relative = key.slice(path.length);
-                    if (!relative || relative === "webdeskmetadata") continue;
-
-                    const parts = relative.split("/").filter(Boolean);
-                    const name = parts[0];
-
-                    // Folder
-                    if (parts.length > 1) {
-                        const folderPath = path + name + "/";
-                        if (!seen.has(folderPath)) {
-                            seen.add(folderPath);
-                            items.push({
-                                path: folderPath,
-                                name,
-                                kind: "directory"
-                            });
+                        if (parts.length > 1) {
+                            if (!items.has(parts[0]) && path + parts[0] !== "/webdeskmetadata") {
+                                items.set(parts[0], { path: path + parts[0] + '/', name: parts[0], type: 'folder' });
+                            }
+                        } else {
+                            items.set(relativePath, { path: key, name: relativePath, type: 'file', folder: path });
                         }
                     }
-                    // File
-                    else {
-                        items.push({
-                            path: key,
-                            name,
-                            kind: "file",
-                            folder: path
-                        });
-                    }
-                }
-
-                resolve(items);
+                });
+                resolve({ items: Array.from(items.values()) });
             };
 
             objectStore.getAllKeys().onerror = function (event) {

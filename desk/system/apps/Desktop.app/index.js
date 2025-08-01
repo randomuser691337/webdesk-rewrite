@@ -7,9 +7,6 @@ export async function launch(UI, fs, Scripts) {
     const contLLM = UI.create('div', llmBTN, 'waiting');
     const ring = UI.create('div', contLLM, 'ring');
     const contBTN = UI.button(right, 'Controls', 'ui-main-btn');
-    if (sys.LLMLoaded === "unsupported") {
-        llmBTN.style.display = "none";
-    }
 
     let currentMenu = {
         element: null,
@@ -81,16 +78,26 @@ export async function launch(UI, fs, Scripts) {
             role: "system"
         });
 
-        messages.push({
-            content: "Hello! Introduce yourself. Keep your response short (under 20 words.)",
-            role: "user"
-        })
-
         const menu = UI.create('div', document.body, 'taskbar-menu');
         menu.style.width = "300px";
+        menu.style.height = "500px";
         const messagebox = UI.create('div', menu);
-        messagebox.style.height = "400px";
-        messagebox.style.overflow = "auto";
+        const layout = UI.leftRightLayout(menu);
+        const input = UI.create('input', layout.left, 'ui-main-input wide');
+        input.placeholder = "Ask Chloe anything...";
+        const btn = UI.button(layout.right, 'Send', 'ui-med-btn');
+
+        btn.addEventListener('click', async function () {
+            UI.text(messagebox, 'You: ' + input.value);
+            let llmResponseTxt = UI.text(messagebox, 'Chloe: ');
+            let llmResponse = "";
+            const response = await UI.sendToLLM(messages, input.value, function (token) {
+                llmResponse += token;
+                llmResponseTxt.innerText = "Chloe: " + llmResponse;
+            });
+
+            llmResponseTxt.innerText = "Chloe: " + response;
+        });
 
         const taskrect = taskbar.getBoundingClientRect();
         menu.style.left = taskrect.left + "px";
@@ -99,68 +106,6 @@ export async function launch(UI, fs, Scripts) {
         currentMenu.element = menu;
         currentMenu.type = "llm";
         document.addEventListener('mousedown', handleOutsideClick);
-
-        if (sys.LLMLoaded !== true) {
-            if (sys.LLMLoaded === false) {
-                UI.text(messagebox, "Chloe's deactivated.");
-                UI.text(messagebox, "Would you like to reactivate her?");
-                const button = UI.button(messagebox, 'Reactivate', 'ui-main-btn');
-                button.addEventListener('click', async function () {
-                    messagebox.innerHTML = "<p>You reactivated Chloe.</p><p>Loading...</p>";
-                    set.del('chloe');
-                    const ai = await fs.read('/system/llm/startup.js');
-                    let model = set.read('LLMModel');
-                    if (!model) model = "Qwen2.5-3B-Instruct-q4f16_1-MLC"
-                    Scripts.loadModule(ai).then(async (mod) => {
-                        let readyResolve;
-                        let ready = new Promise((resolve) => {
-                            readyResolve = resolve;
-                        });
-                        mod.main(UI, readyResolve, model);
-                        ready.then(() => {
-                            closeCurrentMenu();
-                            llmBTN.click();
-                            sys.LLMLoaded = true;
-                        });
-                        sys.LLM = mod;
-                    });
-                });
-            } else {
-                UI.text(messagebox, "Chloe's loading...");
-                UI.text(messagebox, "She'll be with you in a second.");
-            }
-
-            const closeBtn = UI.button(messagebox, 'Close', 'ui-main-btn');
-            closeBtn.addEventListener('click', async function () {
-                closeCurrentMenu();
-            });
-        } else {
-            const layout = UI.leftRightLayout(menu);
-            const input = UI.create('input', layout.left, 'ui-main-input wide');
-            input.placeholder = "Ask Chloe anything...";
-            const btn = UI.button(layout.right, 'Send', 'ui-med-btn');
-
-            btn.addEventListener('click', async function () {
-                UI.text(messagebox, 'You: ' + input.value);
-                let llmResponseTxt = UI.text(messagebox, 'Chloe: ');
-                let llmResponse = "";
-                const response = await UI.sendToLLM(messages, input.value, function (token) {
-                    llmResponse += token;
-                    llmResponseTxt.innerText = "Chloe: " + llmResponse;
-                });
-
-                llmResponseTxt.innerText = "Chloe: " + response;
-            });
-
-            let llmResponseTxt = UI.text(messagebox, 'Chloe: ');
-            let llmResponse = "";
-            const response = await UI.sendToLLM(messages, input.value, function (token) {
-                llmResponse += token;
-                llmResponseTxt.innerText = llmResponse;
-            });
-
-            llmResponseTxt.innerText = response;
-        }
     }
 
     async function openControlsMenu() {
@@ -237,7 +182,6 @@ export async function launch(UI, fs, Scripts) {
     });
 
     const blob = await fs.read('/system/lib/wallpaper.jpg');
-    console.log(blob);
     if (blob instanceof Blob) {
         const imageUrl = URL.createObjectURL(blob);
         document.body.style.backgroundImage = `url('${imageUrl}')`;
