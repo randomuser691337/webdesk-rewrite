@@ -39,6 +39,14 @@ var UI = {
 
         return btn;
     },
+    input: function (parent, placeholder, classname, type) {
+        var input = this.create("input", parent, classname);
+        input.placeholder = placeholder;
+        if (type) {
+            input.type = type;
+        }
+        return input;
+    },
     sendToLLM: async function (messages, userContent, token) {
         try {
             const result = await sys.LLM.send(messages, userContent, token);
@@ -170,6 +178,14 @@ var UI = {
         const right = this.create('div', container, 'flexbox-right');
         return { left, right };
     },
+    snack: function (message, duration = 5000) {
+        const snackbar = this.create('div', document.body, 'snack');
+        snackbar.textContent = message;
+        setTimeout(() => {
+            UI.remove(snackbar);
+        }, duration);
+        return snackbar;
+    },
     focusedWindow: undefined,
     System: {
         darkMode: function () {
@@ -220,6 +236,19 @@ var UI = {
                         }, 170);
                     }, 200);
                 }
+            }
+        },
+        lowgfxMode: function (lowgfx) {
+            if (lowgfx === true) {
+                UI.changevar('main-ui-blur', '0px');
+                UI.changevar('ui-transparancy', '1');
+                UI.changevar('big-shadow', 'none');
+                UI.changevar('small-shadow', 'none');
+            } else {
+                UI.changevar('main-ui-blur', '8px');
+                UI.changevar('ui-transparancy', '0.85');
+                UI.changevar('big-shadow', '0 6px 12px rgba(0, 0, 0, 0.2)')
+                UI.changevar('small-shadow', '1px 0 8px rgba(0, 0, 0, 0.12)');
             }
         }
     }

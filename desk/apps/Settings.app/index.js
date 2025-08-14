@@ -58,6 +58,18 @@ export async function launch(UI, fs, Scripts) {
         title.innerText = "General";
         const group1 = UI.create('div', content, 'box-group');
         const eraseBtn = UI.button(group1, 'Erase WebDesk', 'ui-main-btn wide');
+        const appearbar = UI.leftRightLayout(group1);
+        appearbar.left.innerHTML = '<span class="smalltxt">Low-end device mode</span>';
+        const enableBtn = UI.button(appearbar.right, 'Enable', 'ui-main-btn wide');
+        enableBtn.addEventListener('click', () => {
+            UI.System.lowgfxMode(true);
+            set.write('lowend', 'true');
+        });
+        const disableBtn = UI.button(appearbar.right, 'Disable', 'ui-main-btn wide');
+        disableBtn.addEventListener('click', () => {
+            UI.System.lowgfxMode(false);
+            set.write('lowend');
+        });
     }
 
     async function Assistant() {
@@ -70,21 +82,22 @@ export async function launch(UI, fs, Scripts) {
             const enableBtn = UI.button(appearbar.right, 'Enable', 'ui-main-btn wide');
             const disableBtn = UI.button(appearbar.right, 'Disable', 'ui-main-btn wide');
             disableBtn.addEventListener('click', async function () {
-                if (sys.LLMLoaded === true) {
-                    sys.LLM.deactivate();
-                    set.set('chloe', 'deactivated');
-                } else {
+                if (sys.LLMLoaded !== false) {
                     const areyousure = UI.create('div', document.body, 'cm');
-                    if (sys.LLMLoaded === 'loading') {
-                        UI.text(areyousure, 'Wait for the AI features to finish loading before you shut them off.');
-                    } else if (sys.LLMLoaded === false) {
-                        UI.text(areyousure, 'AI features are already turned off.');
-                    }
+                    UI.text(areyousure, 'Are you sure?', 'bold');
+                    UI.text(areyousure, 'WebDesk will reboot if you disable AI features.');
+                    const yes = UI.button(areyousure, 'Disable', 'ui-main-btn');
+                    yes.addEventListener('click', async function () {
+                        set.write('chloe', 'deactivated');
+                        window.location.reload();
+                    });
 
-                    const no = UI.button(areyousure, 'Cancel');
+                    const no = UI.button(areyousure, 'Cancel', 'ui-main-btn');
                     no.addEventListener('click', async function () {
                         UI.remove(areyousure);
                     });
+                } else {
+                    UI.text(areyousure, 'AI features are already turned off.');
                 }
             });
 
@@ -105,7 +118,7 @@ export async function launch(UI, fs, Scripts) {
                 const areyousure = UI.create('div', document.body, 'cm');
                 UI.text(areyousure, 'Are you sure?', 'bold');
                 UI.text(areyousure, 'WebDesk will reboot once LLMs are deleted. If AI features are on, the default LLM will redownload.');
-                const yes = UI.button(areyousure, 'Delete cache');
+                const yes = UI.button(areyousure, 'Delete cache', 'ui-main-btn');
                 yes.addEventListener('click', async function () {
                     for (const cacheName of cacheArrays) {
                         const deleted = await caches.delete(cacheName);
@@ -116,7 +129,7 @@ export async function launch(UI, fs, Scripts) {
                     window.location.reload();
                 });
 
-                const no = UI.button(areyousure, 'Cancel');
+                const no = UI.button(areyousure, 'Cancel', 'ui-main-btn');
                 no.addEventListener('click', async function () {
                     UI.remove(areyousure);
                 });
@@ -126,7 +139,7 @@ export async function launch(UI, fs, Scripts) {
             const appearbar2 = UI.leftRightLayout(group2);
             appearbar2.left.innerHTML = '<span class="smalltxt">LLM to use</span>';
             let modeln = await set.read('LLMModel');
-            if (modeln === undefined) modeln = "Qwen2.5-3B-Instruct-q4f16_1-MLC";
+            if (modeln === undefined) modeln = "SmolLM2-1.7B-Instruct-q4f32_1-MLC";
             const dropBtn = UI.button(appearbar2.right, UI.truncate(modeln, 25), 'ui-main-btn wide');
             dropBtn.dropBtnDecor();
 
@@ -139,42 +152,53 @@ export async function launch(UI, fs, Scripts) {
 
                 const menu = UI.rightClickMenu(event);
                 menu.style.width = `${Math.floor(rect.width) - 10}px`;
-                menu.style.height = "350px";
-                const models = sys.LLM.listModels();
-                models.forEach(function (model) {
-                    if (model.toLowerCase().includes("chat") || model.toLowerCase().includes("instruct")) {
-                        const btn = UI.button(menu, model, 'ui-small-btn wide');
-                        btn.addEventListener('click', function () {
-                            const rebootmsg = UI.create('div', document.body, 'cm');
-                            UI.text(rebootmsg, 'Use this model?', 'bold');
-                            const match = model.match(/(\d+(?:\.\d+)?)B/i);
-                            const size = match ? parseFloat(match[1]) : 0;
+                if (sys.LLMLoaded === false) {
+                    UI.text(menu, 'Enable AI features to choose LLMs.', 'smalltxt');
+                } else {
+                    menu.style.height = "350px";
+                    const models = sys.LLM.listModels();
+                    const btn2 = UI.button(menu, 'Default', 'ui-small-btn wide');
+                    btn2.addEventListener('click', async function () {
+                        set.del('LLMModel');
+                        await sys.LLM.deactivate();
+                        dropBtn.Filler.innerText = UI.truncate('SmolLM2-1.7B-Instruct-q4f32_1-MLC', 25);
+                        await wd.startLLM();
+                    });
+                    models.forEach(function (model) {
+                        if (model.toLowerCase().includes("chat") || model.toLowerCase().includes("instruct")) {
+                            const btn = UI.button(menu, model, 'ui-small-btn wide');
+                            btn.addEventListener('click', function () {
+                                const rebootmsg = UI.create('div', document.body, 'cm');
+                                UI.text(rebootmsg, 'Use this model?', 'bold');
+                                const match = model.match(/(\d+(?:\.\d+)?)B/i);
+                                const size = match ? parseFloat(match[1]) : 0;
 
-                            if (size < 1.1) {
-                                UI.text(rebootmsg, `This model has limited knowledge and might struggle with complex tasks. It runs well on most modern devices.`);
-                            } else if (size > 5.1) {
-                                UI.text(rebootmsg, `THIS MODEL IS HUGE. It'll excel at nearly everything but requires high-end hardware to run smoothly.`);
-                            } else {
-                                UI.text(rebootmsg, `This is a mid-sized model. It can handle most tasks with careful prompting, but low-end hardware may struggle.`);
-                            }
-                            UI.text(rebootmsg, `Each model acts differently.`);
+                                if (size < 1.1) {
+                                    UI.text(rebootmsg, `This model has limited knowledge and might struggle with complex tasks. It runs well on most modern devices.`);
+                                } else if (size > 5.1) {
+                                    UI.text(rebootmsg, `THIS MODEL IS HUGE. It'll excel at nearly everything but requires high-end hardware to run smoothly.`);
+                                } else {
+                                    UI.text(rebootmsg, `This is a mid-sized model. It can handle most tasks with careful prompting, but low-end hardware may struggle.`);
+                                }
+                                UI.text(rebootmsg, `Each model acts differently.`);
 
-                            UI.text(rebootmsg, 'Chloe will restart and use the new model from now on.');
-                            const reboot = UI.button(rebootmsg, 'Use model', 'ui-med-btn');
-                            reboot.addEventListener('click', async function () {
-                                set.set('LLMModel', model);
-                                await sys.LLM.deactivate();
-                                dropBtn.Filler.innerText = UI.truncate(model, 25);
-                                await wd.startLLM();
+                                UI.text(rebootmsg, 'Chloe will restart and use the new model from now on.');
+                                const reboot = UI.button(rebootmsg, 'Use model', 'ui-med-btn');
+                                reboot.addEventListener('click', async function () {
+                                    set.write('LLMModel', model);
+                                    await sys.LLM.deactivate();
+                                    dropBtn.Filler.innerText = UI.truncate(model, 25);
+                                    await wd.startLLM();
+                                });
+
+                                const close = UI.button(rebootmsg, `Cancel`, 'ui-med-btn');
+                                close.addEventListener('click', function () {
+                                    UI.remove(rebootmsg);
+                                });
                             });
-
-                            const close = UI.button(rebootmsg, `Cancel`, 'ui-med-btn');
-                            close.addEventListener('click', function () {
-                                UI.remove(rebootmsg);
-                            });
-                        });
-                    }
-                });
+                        }
+                    });
+                }
             });
 
             UI.line(group2);
@@ -211,13 +235,13 @@ export async function launch(UI, fs, Scripts) {
         lightBtn.style.margin = "0px 0px 0px 4px";
         lightBtn.addEventListener('click', () => {
             UI.System.lightMode();
-            set.set('appearance', 'light');
+            set.write('appearance', 'light');
         });
         const darkBtn = UI.button(appearbar.right, 'Dark', 'ui-main-btn wide');
         darkBtn.style.margin = "0px 0px 0px 4px";
         darkBtn.addEventListener('click', () => {
             UI.System.darkMode();
-            set.set('appearance', 'dark');
+            set.write('appearance', 'dark');
         });
 
         UI.line(group1);
@@ -239,7 +263,7 @@ export async function launch(UI, fs, Scripts) {
             colorButton.style.backgroundColor = "rgb(" + color + ")";
             colorButton.addEventListener('click', () => {
                 UI.changevar('ui-accent', color);
-                set.set('accent', color);
+                set.write('accent', color);
             });
         });
     }

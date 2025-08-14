@@ -106,7 +106,7 @@ set = {
             }
         }
     },
-    async set(key, value) {
+    async write(key, value) {
         try {
             await this.ensureConfigLoaded();
             sys.config[key] = value;

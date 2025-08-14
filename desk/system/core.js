@@ -24,7 +24,7 @@ var wd = {
                 readyResolve = resolve;
             });
             let modelName = await set.read('LLMModel');
-            if (!modelName) modelName = "Qwen2.5-3B-Instruct-q4f16_1-MLC";
+            if (!modelName) modelName = "SmolLM2-1.7B-Instruct-q4f32_1-MLC";
             mod.main(UI, readyResolve, modelName);
             ready.then(() => {
                 sys.LLMLoaded = true;

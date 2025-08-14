@@ -110,26 +110,28 @@ export async function launch(UI, fs, Scripts) {
                 await openfile();
             });
 
-            button.addEventListener('contextmenu', async function (e) {
-                e.preventDefault();
-                const contextMenu = UI.rightClickMenu(e);
+            document.addEventListener('mousedown', function (event) {
+                if (event.button === 2) {
+                    event.preventDefault();
+                    const contextMenu = UI.rightClickMenu(event);
 
-                const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn wide');
-                openButton.onclick = async () => {
-                    if (file.kind === "directory") {
-                        await nav(file.path);
-                    } else {
-                        await openfile();
-                    }
-                    contextMenu.remove();
-                };
+                    const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn wide');
+                    openButton.onclick = async () => {
+                        if (file.kind === "directory") {
+                            await nav(file.path);
+                        } else {
+                            await openfile();
+                        }
+                        contextMenu.remove();
+                    };
 
-                const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn wide');
-                deleteButton.onclick = async () => {
-                    await fs.rm(file.path);
-                    nav(currentPath);
-                    contextMenu.remove();
-                };
+                    const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn wide');
+                    deleteButton.onclick = async () => {
+                        await fs.rm(file.path);
+                        nav(currentPath);
+                        contextMenu.remove();
+                    };
+                }
             });
         });
     }

@@ -2,25 +2,62 @@ Scripts.loadCSS('/system/style.css');
 Scripts.loadJS('/system/core.js');
 Scripts.loadJS('/system/lib/socket.io.js');
 (async function () {
-    const desktop = await fs.read('/system/apps/Desktop.app/index.js');
-    Scripts.loadModule(desktop).then(async (mod) => {
-        if (('gpu' in navigator)) {
-            if (await set.read('chloe') !== "deactivated") {
-                wd.startLLM();
-            }
+    const checkSockets = await startsockets();
+    if (await set.read('setupdone') !== "true") {
+        if (checkSockets === true) {
+            const setup = await Scripts.loadModule(await fs.read('/system/apps/Setup.app/index.js'));
+            await setup.launch(UI, fs, Scripts);
         } else {
-            sys.LLMLoaded = "unsupported";
+            const setupflexcontainer = UI.create('div', document.body, 'setup-flex-container');
+            const setup = UI.create('div', setupflexcontainer, 'setup-window');
+            UI.text(setup, "Welcome to WebDesk!");
+            UI.text(setup, "WebDesk's server is down, so setup can't continue. Continue as guest?");
+            const btn = UI.button(setup, "Reboot", "ui-main-btn");
+            btn.addEventListener('click', () => {
+                window.location.reload();
+            });
+
+            const guestBtn = UI.button(setup, "Guest", "ui-main-btn");
+            guestBtn.addEventListener('click', async () => {
+                await set.write('setupdone', 'true');
+                await set.write('guest', 'true');
+                UI.remove(setupflexcontainer);
+                const desktop = await fs.read('/system/apps/Desktop.app/index.js');
+                Scripts.loadModule(desktop).then(async (mod) => {
+                    if (('gpu' in navigator)) {
+                        if (await set.read('chloe') !== "deactivated") {
+                            wd.startLLM();
+                        }
+                    } else {
+                        sys.LLMLoaded = "unsupported";
+                    }
+                    mod.launch(UI, fs, Scripts);
+                });
+            });
         }
-        mod.launch(UI, fs, Scripts);
-    });
-    const acc = await set.read('accent');
-    if (acc) UI.changevar('ui-accent', acc);
-    const appear = await set.read('appearance');
-    if (appear === "dark") UI.System.darkMode();
+    } else {
+        const desktop = await fs.read('/system/apps/Desktop.app/index.js');
+        Scripts.loadModule(desktop).then(async (mod) => {
+            if (('gpu' in navigator)) {
+                if (await set.read('chloe') !== "deactivated") {
+                    wd.startLLM();
+                }
+            } else {
+                sys.LLMLoaded = "unsupported";
+            }
+            mod.launch(UI, fs, Scripts);
+        });
+        const acc = await set.read('accent');
+        if (acc) UI.changevar('ui-accent', acc);
+        const appear = await set.read('appearance');
+        if (appear === "dark") UI.System.darkMode();
+        const lowdevice = await set.read('lowend');
+        if (lowdevice === "true") UI.System.lowgfxMode(true);
+    }
 })();
 
 async function startsockets() {
-    const devsocket = await fs.read('/system/info/devsocket');
+    const devsocket = await set.read('devsocket');
     return new Promise((resolve) => {
         try {
             if (sys.socket) {
@@ -30,7 +67,7 @@ async function startsockets() {
 
             if (devsocket === "true") {
                 sys.socket = io('wss://webdeskbeta.meower.xyz/');
-                wm.notif('Using beta socket server', 'This is for testing purposes only and might not even be online.');
+                UI.notif('Using beta socket server', 'This is for testing purposes only and might not even be online.');
             } else {
                 sys.socket = io("wss://webdesk.meower.xyz/");
             }
@@ -58,14 +95,14 @@ async function startsockets() {
             });
 
             sys.socket.on("servmsg", (data) => {
-                wm.snack(data);
+                UI.snack(data);
             });
 
             sys.socket.on("error", (data) => {
                 if (data == "No token provided" && sys.setupd === false) {
                     console.log(`<!> Quiet error: ` + data);
                 } else {
-                    wm.snack(data);
+                    UI.snack(data);
                 }
             });
 
@@ -92,12 +129,12 @@ async function startsockets() {
                 } else {
                     sys.name = thing.username;
                     sd = thing.username;
-                    await set.set('name', thing.username);
+                    await set.write('name', thing.username);
                     webid.token = await fs.read('/user/info/token');
                     webid.priv = thing.priv;
                     webid.userid = thing.userid;
                     if (thing.priv === 0) {
-                        wm.notif('Your account has been limited.', `You can still use WebDesk normally, but you can't use online services.`);
+                        UI.notif('Your account has been limited.', `You can still use WebDesk normally, but you can't use online services.`);
                     }
                     console.log(`<i> Logged in!
 - Username: ${thing.username}
@@ -106,84 +143,6 @@ async function startsockets() {
 - Token: ${UI.truncate(webid.token, 8)}`);
                 }
                 resolve(true);
-            });
-
-            sys.socket.on("webcall", async (call) => {
-                const notif = wm.notif('Call from ' + call.username, undefined, async function () {
-                    app.webcomm.webcall.init(call.username, call.deskid, call.id);
-                }, 'Answer');
-                setTimeout(function () {
-                    if (notif) {
-                        ui.dest(notif.div);
-                    }
-                }, 15000);
-            });
-
-            var recsock = [];
-
-            sys.socket.on("umsg", async (msg) => {
-                if (!recsock[msg.username]) {
-                    recsock[msg.username] = [];
-                }
-
-                recsock[msg.username].push(msg.contents);
-
-                if (random[msg.username]) {
-                    await app.webcomm.webchat.init(msg.username, [msg.contents], false);
-                } else {
-                    if (random[msg.username + "notif"]) {
-                        ui.dest(random[msg.username + "notif"]);
-                    }
-
-                    const notif = wm.notif(msg.username, msg.contents, async function () {
-                        random[msg.username] = tk.mbw('WebChat', '300px', 'auto', true);
-                        random[msg.username].messaging = tk.c('div', random[msg.username].main);
-                        random[msg.username].chatting = tk.c('div', random[msg.username].messaging, 'embed nest message-container');
-                        random[msg.username].chatting.style.overflow = "auto";
-                        random[msg.username].chatting.style.height = "320px";
-                        tk.ps(`Talking with ${msg.username}`, 'smtxt', random[msg.username].chatting);
-
-                        if (sys.filter === true) {
-                            tk.ps(`Some filters can detect things YOU send, as they monitor your typing.`, 'smtxt', random[msg.username].chatting);
-                        }
-
-                        random[msg.username].containchatdiv = tk.c('div', random[msg.username].messaging);
-                        random[msg.username].containchatdiv.style.display = "flex";
-
-                        random[msg.username].input = tk.c('input', random[msg.username].containchatdiv, 'i1 tnav');
-                        random[msg.username].input.placeholder = "Message " + msg.username;
-
-                        function send() {
-                            const message = random[msg.username].input.value;
-                            if (message) {
-                                sys.socket.emit("message", { token: webid.token, username: msg.username, contents: message });
-                                const div = tk.c('div', random[msg.username].chatting, 'msg mesent');
-                                div.innerText = ui.filter(message);
-                                div.style.marginBottom = "3px";
-                                random[msg.username].input.value = '';
-                                random[msg.username].chatting.scrollTop = random[msg.username].chatting.scrollHeight;
-                            }
-                        }
-
-                        random[msg.username].containchatdiv.style.marginTop = "5px";
-
-                        tk.cb('b1 title resist', 'Send', () => send(), random[msg.username].containchatdiv);
-                        ui.key(random[msg.username].input, "Enter", () => send());
-
-                        random[msg.username].closebtn.addEventListener('mousedown', function () {
-                            random[msg.username] = undefined;
-                        });
-
-                        app.webcomm.add(msg.username);
-                        app.webcomm.webchat.init(msg.username, recsock[msg.username], true);
-                    }, 'Open');
-
-                    random[msg.username + "notif"] = notif.div;
-                }
-
-                random[msg.username].closebtn.addEventListener('mousedown', function () {
-                    recsock[msg.username] = undefined;
-                });
             });
         } catch (error) {
             console.log(error);

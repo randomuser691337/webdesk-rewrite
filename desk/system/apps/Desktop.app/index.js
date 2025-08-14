@@ -57,7 +57,7 @@ export async function launch(UI, fs, Scripts) {
 
                 if (typeof mod.launch === 'function') {
                     const appInstance = await mod.launch(UI, fs, Scripts, true);
-                    console.log(appInstance)
+                    console.log(appInstance);
                 } else {
                     console.warn(`${file.name} has no launch() export`);
                 }
@@ -110,7 +110,7 @@ export async function launch(UI, fs, Scripts) {
                     set.del('chloe');
                     const ai = await fs.read('/system/llm/startup.js');
                     let model = set.read('LLMModel');
-                    if (!model) model = "Qwen2.5-3B-Instruct-q4f16_1-MLC"
+                    if (!model) model = "QSmolLM2-1.7B-Instruct-q4f32_1-MLC"
                     Scripts.loadModule(ai).then(async (mod) => {
                         let readyResolve;
                         let ready = new Promise((resolve) => {

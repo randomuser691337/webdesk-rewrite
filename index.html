@@ -50,10 +50,12 @@
             scri.type = "module";
             scri.textContent = `import { unzipSync } from "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js";
             async function extractZipToOPFS(zipFile) {
-                const checkIfExist = await fs.read('/system/donotupdate');
-                if (checkIfExist === "true") {
-                    console.log('Not updating. User set it to not');
+                const FORCEUPDATE = true
+                if (FORCEUPDATE === false) {
+                    console.log('<i> FORCEUPDATE flag false, skipping');
                 } else {
+                    const div = UI.create('div', document.body);
+                    console.log('FORCE UPDATE ENABLED. TURN OFF BEFORE PRODUCTION');
                     const response = await fetch('./desk.zip');
                     const buffer = new Uint8Array(await response.arrayBuffer());
                     const files = unzipSync(buffer);

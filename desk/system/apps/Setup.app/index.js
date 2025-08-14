@@ -1,4 +1,12 @@
 export async function launch(UI, fs, Scripts) {
+    const blob = await fs.read('/system/lib/wallpaper.jpg');
+    console.log(blob);
+    if (blob instanceof Blob) {
+        const imageUrl = URL.createObjectURL(blob);
+        document.body.style.backgroundImage = `url('${imageUrl}')`;
+    } else {
+        console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
+    }
     const setupflexcontainer = UI.create('div', document.body, 'setup-flex-container');
     const setup = UI.create('div', setupflexcontainer, 'setup-window');
     UI.text(setup, "Welcome to WebDesk!");
@@ -65,10 +73,82 @@ export async function launch(UI, fs, Scripts) {
         }
     }
 
+    async function logIn() {
+        setup.innerHTML = '';
+        const changeTxt2 = UI.text(setup, "");
+        changeTxt2.style.marginBottom = '10px';
+        const changeTxt = UI.create('span', changeTxt2);
+        changeTxt.innerText = "Create a WebDesk account ";
+        const switchBtn = UI.button(changeTxt2, "Login instead", "ui-small-btn");
+        const username = UI.input(setup, "Username", "ui-main-input wide", "text");
+        const password = UI.input(setup, "Password", "ui-main-input wide", "password");
+        const loginBtn = UI.button(setup, "Create account", "ui-main-btn");
+
+        function switchToLogin() {
+            changeTxt.innerText = "Sign into your WebDesk account ";
+            switchBtn.Filler.innerText = "Create account instead";
+            loginBtn.Filler.innerText = "Sign in instead";
+            switchBtn.removeEventListener('click', switchToLogin);
+            switchBtn.addEventListener('click', switchToCreation);
+            loginBtn.removeEventListener('click', createAccount);
+            loginBtn.addEventListener('click', loginToAccount);
+        }
+
+        function switchToCreation() {
+            changeTxt.innerText = "Create a WebDesk account ";
+            switchBtn.Filler.innerText = "Login instead";
+            loginBtn.Filler.innerText = "Create account";
+            switchBtn.removeEventListener('click', switchToCreation);
+            switchBtn.addEventListener('click', switchToLogin);
+            loginBtn.removeEventListener('click', loginToAccount);
+            loginBtn.addEventListener('click', createAccount);
+        }
+
+        function loginToAccount() {
+            if (username && password) {
+                sys.socket.emit("signin", { user: username.value, pass: password.value });
+            } else {
+                wm.snack("Please enter both username and password.");
+            }
+        }
+
+        function createAccount() {
+            if (username && password) {
+                sys.socket.emit("newacc", { user: username.value, pass: password.value });
+            } else {
+                wm.snack("Enter both username and password.");
+            }
+        }
+
+        sys.socket.on("logininstead", () => {
+            const menu = UI.create('div', setup, 'cm');
+            UI.text(menu, "You already have an account! Log in as " + username.value + "?");
+
+            const noBtn = UI.button(menu, "Close", "ui-main-btn");
+            noBtn.addEventListener('click', () => {
+                UI.remove(menu);
+            });
+
+            const yesBtn = UI.button(menu, "Log in", "ui-main-btn");
+            yesBtn.addEventListener('click', () => {
+                sys.socket.emit("signin", { user: username.value, pass: password.value });
+                UI.remove(menu);
+            });
+        });
+
+        sys.socket.on("token", ({ token }) => {
+            fs.write('/user/info/token', token);
+            console.log('<i> Token received: ' + UI.truncate(token, 7));
+            llmStatus();
+        });
+
+        switchToCreation();
+    }
+
     async function llmStatus() {
         setup.innerHTML = '';
-        UI.text(setup, "Chloe");
-        UI.text(setup, `WebDesk now includes an assistant called Chloe! She can summarize documents, notifications, write basic essays, etc. She has a status light in the taskbar that you can decipher:`);
+        UI.text(setup, "Assistant");
+        UI.text(setup, `WebDesk now includes an assistant called Chloe! It can summarize documents, notifications, write basic essays, etc. It has a status light in the taskbar that you can check:`);
 
         const setupR = UI.create('div', setup, 'box-group')
 
@@ -122,7 +202,33 @@ export async function launch(UI, fs, Scripts) {
             }, 300);
         }, 600);
         errorBar.right.innerText = "Error/Problem";
+
+        const doneBtn = UI.button(setup, "Got it", "ui-main-btn");
+        const deactivateAIBtn = UI.button(setup, "Deactivate AI features", "ui-main-btn");
+        doneBtn.addEventListener('click', () => {
+            set.write('setupdone', 'true');
+            window.location.reload();
+        });
+
+        function deactivateAI() {
+            set.write('setupdone', 'true');
+            set.write('chloe', 'deactivated');
+            UI.snack('AI features deactivated. You can reactivate them in Settings > Manage AI.');
+            deactivateAIBtn.Filler.innerText = "Reactivate AI features";
+            deactivateAIBtn.removeEventListener('click', deactivateAI);
+            deactivateAIBtn.addEventListener('click', reactivateAI);
+        }
+
+        function reactivateAI() {
+            set.del('chloe');
+            UI.snack('AI features reactivated. You can deactivate them in Settings > Manage AI.');
+            deactivateAIBtn.Filler.innerText = "Deactivate AI features";
+            deactivateAIBtn.removeEventListener('click', reactivateAI);
+            deactivateAIBtn.addEventListener('click', deactivateAI);
+        }
+
+        deactivateAIBtn.addEventListener('click', deactivateAI);
     }
 
-    llmStatus();
+    logIn();
 }
