@@ -8,17 +8,25 @@ var UI = {
         return el;
     },
     button: function (parent, text, classname) {
-        var btn = this.create("button", parent, classname);
+        var btn = this.create("button", parent, classname + " webdesk-ui-styling noselect");
+        btn.setAttribute("role", "button");
+        btn.tabIndex = 0;
+        btn.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                btn.click();
+            }
+        });
         if (typeof classname === "string" && classname.includes("ui-main-btn")) {
-            const txt = this.create("div", btn, "ui-main-btn-filler");
+            const txt = this.create("div", btn, "ui-main-btn-filler noselect");
             txt.textContent = text;
             btn.Filler = txt;
         } else if (typeof classname === "string" && classname.includes("ui-small-btn")) {
-            const txt = this.create("div", btn, "ui-small-btn-filler");
+            const txt = this.create("div", btn, "ui-small-btn-filler noselect");
             txt.textContent = text;
             btn.Filler = txt;
         } else if (typeof classname === "string" && classname.includes("ui-med-btn")) {
-            const txt = this.create("div", btn, "ui-med-btn-filler");
+            const txt = this.create("div", btn, "ui-med-btn-filler noselect");
             txt.textContent = text;
             btn.Filler = txt;
         } else {
@@ -65,7 +73,7 @@ var UI = {
         txt.textContent = text;
         return txt;
     },
-    window: function (title) {
+    window: function (title, module) {
         const win = this.create("div", document.body, "window");
         const header = this.create("div", win, "window-header window-draggable");
         const headerbtns = this.create("div", header, "window-header-nav");
@@ -125,7 +133,14 @@ var UI = {
         updateWindow();
 
         closeBtn.addEventListener("click", () => {
-            win.remove();
+            if (module) {
+                console.log(module);
+                if (typeof module.close === 'function') {
+                    module.close();
+                }
+            } else {
+                win.remove();
+            }
         });
 
         return { win, header, content, headertxt, headerbtns, buttons: { closeBtn, minBtn, maxBtn, container: headerbtns }, updateWindow };
@@ -189,13 +204,15 @@ var UI = {
     focusedWindow: undefined,
     System: {
         darkMode: function () {
-            UI.changevar('bg-ui-primary', '35, 35, 35');
+            UI.changevar('ui-primary', '40, 40, 40');
             UI.changevar('ui-secondary', '50, 50, 50');
+            UI.changevar('ui-tertiary', '60, 60, 60');
             UI.changevar('text', '#fff');
         },
         lightMode: function () {
-            UI.changevar('bg-ui-primary', '255, 255, 255');
-            UI.changevar('ui-secondary', '240, 240, 240');
+            UI.changevar('ui-primary', '255, 255, 255');
+            UI.changevar('ui-secondary', '245, 245, 245');
+            UI.changevar('ui-tertiary', '235, 235, 235');
             UI.changevar('text', '#000');
         },
         llmRing: function (state) {

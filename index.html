@@ -12,8 +12,13 @@
     <script>
         var fs;
         var set;
-        var Scripts = {
-            loadJS: async function (path) {
+
+        var core = {
+            incrementTask: 0,
+            tasks: [],
+            onTaskStart: [],
+            onTaskClosed: [],
+            async loadJS(path) {
                 console.log('<i> Initializing ' + path)
                 const data = await fs.read(path);
                 if (!data) {
@@ -24,7 +29,7 @@
                 script.textContent = data;
                 document.head.appendChild(script);
             },
-            loadCSS: async function (path) {
+            async loadCSS(path) {
                 console.log('<i> Loading CSS: ' + path)
                 const data = await fs.read(path);
                 if (!data) {
@@ -35,12 +40,26 @@
                 script.textContent = data;
                 document.head.appendChild(script);
             },
-            async loadModule(code) {
+            async loadModule(code2) {
+                const id = this.incrementTask++;
+                const code = `export var id = ${id};\n` + code2;
                 const blob = new Blob([code], { type: "application/javascript" });
                 const url = URL.createObjectURL(blob);
                 const mod = await import(url);
+
+                const task = { name: mod.name || 'Unnamed Module', id, task: mod };
+                this.tasks.push(task);
+                this.onTaskStart.forEach(cb => cb.callback(task));
+
                 URL.revokeObjectURL(url);
                 return mod;
+            },
+            async removeModule(id) {
+                const index = this.tasks.findIndex(t => t.id === id);
+                if (index !== -1) {
+                    this.tasks.splice(index, 1);
+                    this.onTaskClosed.forEach(cb => cb.callback(id));
+                }
             }
         }
 
@@ -87,7 +106,7 @@
                     console.log("ZIP extracted to OPFS. Handing control to init.js."); 
                 }
                 
-                Scripts.loadJS('/system/init.js');
+                core.loadJS('/system/init.js');
             }
 
             (async () => {

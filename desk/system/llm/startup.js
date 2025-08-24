@@ -2,6 +2,8 @@ import * as webllm from "https://esm.run/@mlc-ai/web-llm";
 
 let engine = null;
 
+export var name = "LLM engine"
+
 export async function main(UI, ready, modelName) {
     console.log("Let there be LLMs");
     const textContain = UI.create('div', document.body, 'llm-prog');

@@ -1,5 +1,9 @@
-export async function launch(UI, fs, Scripts) {
-    const win = UI.window('Settings');
+export var name = "Settings";
+var win;
+var core2;
+export async function launch(UI, fs, core, unused, module) {
+    core2 = core;
+    win = UI.window(name, module);
     win.win.style.width = "500px";
     win.win.style.height = "500px";
     win.headertxt.innerHTML = "";
@@ -62,13 +66,23 @@ export async function launch(UI, fs, Scripts) {
         appearbar.left.innerHTML = '<span class="smalltxt">Low-end device mode</span>';
         const enableBtn = UI.button(appearbar.right, 'Enable', 'ui-main-btn wide');
         enableBtn.addEventListener('click', () => {
-            UI.System.lowgfxMode(true);
             set.write('lowend', 'true');
+            const menu = UI.create('div', document.body, 'cm');
+            UI.text(menu, 'Restart WebDesk to enable low-end device mode');
+            const btn = UI.button(menu, 'Restart', 'ui-med-btn');
+            btn.addEventListener('click', function () { window.location.reload(); });
+            const btn2 = UI.button(menu, `I'll do it later`, 'ui-med-btn');
+            btn2.addEventListener('click', function () { UI.remove(menu); });
         });
         const disableBtn = UI.button(appearbar.right, 'Disable', 'ui-main-btn wide');
         disableBtn.addEventListener('click', () => {
-            UI.System.lowgfxMode(false);
-            set.write('lowend');
+            set.del('lowend');
+            const menu = UI.create('div', document.body, 'cm');
+            UI.text(menu, 'Restart WebDesk to disable low-end device mode');
+            const btn = UI.button(menu, 'Restart', 'ui-med-btn');
+            btn.addEventListener('click', function () { window.location.reload(); });
+            const btn2 = UI.button(menu, `I'll do it later`, 'ui-med-btn');
+            btn2.addEventListener('click', function () { UI.remove(menu); });
         });
     }
 
@@ -169,7 +183,7 @@ export async function launch(UI, fs, Scripts) {
                             const btn = UI.button(menu, model, 'ui-small-btn wide');
                             btn.addEventListener('click', function () {
                                 const rebootmsg = UI.create('div', document.body, 'cm');
-                                UI.text(rebootmsg, 'Use this model?', 'bold');
+                                UI.text(rebootmsg, 'Use this model? WebDesk will restart.', 'bold');
                                 const match = model.match(/(\d+(?:\.\d+)?)B/i);
                                 const size = match ? parseFloat(match[1]) : 0;
 
@@ -183,7 +197,8 @@ export async function launch(UI, fs, Scripts) {
                                 UI.text(rebootmsg, `Each model acts differently.`);
 
                                 UI.text(rebootmsg, 'Chloe will restart and use the new model from now on.');
-                                const reboot = UI.button(rebootmsg, 'Use model', 'ui-med-btn');
+                                
+                                const reboot = UI.button(rebootmsg, 'Restart and use model', 'ui-med-btn');
                                 reboot.addEventListener('click', async function () {
                                     set.write('LLMModel', model);
                                     await sys.LLM.deactivate();
@@ -209,7 +224,7 @@ export async function launch(UI, fs, Scripts) {
             const changePrompt = UI.button(appearbar4.right, 'Change Prompt', 'ui-main-btn');
             changePrompt.addEventListener('click', async function () {
                 const code = await fs.read('/apps/TextEdit.app/index.js');
-                const mod = await Scripts.loadModule(code);
+                const mod = await core.loadModule(code);
                 const textedit = await mod.launch(UI, fs);
                 textedit.open('/system/llm/prompt.txt');
             });
@@ -274,4 +289,10 @@ export async function launch(UI, fs, Scripts) {
         Assistant: Assistant(),
         Personalize: Personalize()
     };
+}
+
+export async function close() {
+    core2.removeModule(id);
+    UI.remove(win.win);
+    win = undefined;
 }

@@ -1,6 +1,14 @@
-export async function launch(UI, fs, Scripts) {
+export var name = "Setup Assistant";
+
+var UI2;
+
+export async function close() {
+    UI.snack(`Setup Assistant can't be closed.`);
+}
+
+export async function launch(UI, fs, core) {
+    UI2 = UI;
     const blob = await fs.read('/system/lib/wallpaper.jpg');
-    console.log(blob);
     if (blob instanceof Blob) {
         const imageUrl = URL.createObjectURL(blob);
         document.body.style.backgroundImage = `url('${imageUrl}')`;
@@ -25,7 +33,7 @@ export async function launch(UI, fs, Scripts) {
 
     async function migratePane() {
         setup.innerHTML = '';
-        UI.text(setup, "Migration Assistant");
+        UI.text(setup, "Welcome to WebDesk!");
         const existing = await fs.read('/user/info/config.json');
         if (existing) {
             const status = UI.text(setup, "Copy data from old WebDesk to new WebDesk? This might take a while, files need to be converted.");
@@ -46,9 +54,10 @@ export async function launch(UI, fs, Scripts) {
                         all.forEach(async (file) => {
                             counter++;
                             status.innerText = counter + "/" + all.length + ": " + file;
-                            if (file.startsWith('/system/' || data.path.startsWith('/apps/'))) {
+                            if (file.startsWith('/system/' || file.startsWith('/apps/') || file === '/user/info/config.json')) {
                                 return;
                             } else {
+                                console.log(file);
                                 const data = await fs2.read(file);
                                 if (data.startsWith('data:')) {
                                     const base64Data = data.split(',')[1];
@@ -65,7 +74,14 @@ export async function launch(UI, fs, Scripts) {
                                 }
                             }
                         });
-                    }, 1000); // not fighting with old webdesk
+
+                        const checkForToken = await fs.read('/user/info/token');
+                        if (checkForToken) {
+                           llmStatus();
+                        } else {
+                            logIn();
+                        }
+                    }, 1000);
                 }
             });
         } else {
@@ -230,5 +246,5 @@ export async function launch(UI, fs, Scripts) {
         deactivateAIBtn.addEventListener('click', deactivateAI);
     }
 
-    logIn();
+    migratePane();
 }

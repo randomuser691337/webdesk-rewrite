@@ -45,7 +45,9 @@ var fs2 = {
         const requestId = requestIdCounter++;
         return new Promise((resolve, reject) => {
             pendingRequests[requestId] = { resolve, reject };
-            if (!params.startsWith('/')) params = "/" + params;
+            if (typeof params === 'string' && params.length > 0 && !params.startsWith('/')) {
+                params = "/" + params;
+            }
             const message = { type: 'fs', operation, params, opt, requestId, filetype };
             const transferList = operation === 'write' && opt instanceof ArrayBuffer ? [opt] : undefined;
             this.send(message, transferList);

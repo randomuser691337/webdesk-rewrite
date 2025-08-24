@@ -1,12 +1,12 @@
-Scripts.loadCSS('/system/style.css');
-Scripts.loadJS('/system/core.js');
-Scripts.loadJS('/system/lib/socket.io.js');
+core.loadCSS('/system/style.css');
+core.loadJS('/system/core.js');
+core.loadJS('/system/lib/socket.io.js');
 (async function () {
     const checkSockets = await startsockets();
     if (await set.read('setupdone') !== "true") {
         if (checkSockets === true) {
-            const setup = await Scripts.loadModule(await fs.read('/system/apps/Setup.app/index.js'));
-            await setup.launch(UI, fs, Scripts);
+            const setup = await core.loadModule(await fs.read('/system/apps/Setup.app/index.js'));
+            await setup.launch(UI, fs, core);
         } else {
             const setupflexcontainer = UI.create('div', document.body, 'setup-flex-container');
             const setup = UI.create('div', setupflexcontainer, 'setup-window');
@@ -23,7 +23,7 @@ Scripts.loadJS('/system/lib/socket.io.js');
                 await set.write('guest', 'true');
                 UI.remove(setupflexcontainer);
                 const desktop = await fs.read('/system/apps/Desktop.app/index.js');
-                Scripts.loadModule(desktop).then(async (mod) => {
+                core.loadModule(desktop).then(async (mod) => {
                     if (('gpu' in navigator)) {
                         if (await set.read('chloe') !== "deactivated") {
                             wd.startLLM();
@@ -31,13 +31,17 @@ Scripts.loadJS('/system/lib/socket.io.js');
                     } else {
                         sys.LLMLoaded = "unsupported";
                     }
-                    mod.launch(UI, fs, Scripts);
+                    mod.launch(UI, fs, core);
                 });
             });
         }
     } else {
+        const acc = await set.read('accent');
+        if (acc) UI.changevar('ui-accent', acc);
+        if (await set.read('appearance') === "dark") UI.System.darkMode();
+        if (await set.read('lowend') === "true") UI.System.lowgfxMode(true);
         const desktop = await fs.read('/system/apps/Desktop.app/index.js');
-        Scripts.loadModule(desktop).then(async (mod) => {
+        core.loadModule(desktop).then(async (mod) => {
             if (('gpu' in navigator)) {
                 if (await set.read('chloe') !== "deactivated") {
                     wd.startLLM();
@@ -45,14 +49,8 @@ Scripts.loadJS('/system/lib/socket.io.js');
             } else {
                 sys.LLMLoaded = "unsupported";
             }
-            mod.launch(UI, fs, Scripts);
+            mod.launch(UI, fs, core);
         });
-        const acc = await set.read('accent');
-        if (acc) UI.changevar('ui-accent', acc);
-        const appear = await set.read('appearance');
-        if (appear === "dark") UI.System.darkMode();
-        const lowdevice = await set.read('lowend');
-        if (lowdevice === "true") UI.System.lowgfxMode(true);
     }
 })();
 

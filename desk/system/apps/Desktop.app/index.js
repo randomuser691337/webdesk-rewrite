@@ -1,5 +1,8 @@
-export async function launch(UI, fs, Scripts) {
-    const taskbar = UI.create('div', document.body, 'taskbar');
+export var name = "Desktop"
+var taskbar;
+var imageUrl;
+export async function launch(UI, fs, core) {
+    taskbar = UI.create('div', document.body, 'taskbar');
     const left = UI.create('div', taskbar, 'window-header-nav');
     const right = UI.create('div', taskbar, 'window-header-text');
     const appBTN = UI.button(left, 'Apps', 'ui-main-btn');
@@ -53,11 +56,26 @@ export async function launch(UI, fs, Scripts) {
             btn.addEventListener('click', async () => {
                 const path = await fs.read(file.path);
                 const code = await fs.read(path);
-                const mod = await Scripts.loadModule(code);
+                const mod = await core.loadModule(code);
 
                 if (typeof mod.launch === 'function') {
-                    const appInstance = await mod.launch(UI, fs, Scripts, true);
-                    console.log(appInstance);
+                    if (mod.close && typeof mod.close === 'function') {
+                        const appInstance = await mod.launch(UI, fs, core, true, mod);
+                    } else {
+                        const div = UI.create('div', document.body, 'cm');
+                        UI.text(div, "This app is missing the close() function or it wasn't exported.");
+                        UI.text(div, `If you launch it anyways, it might leave things behind in memory on close.`);
+                        UI.text(div, "If you're the developer, implement the close() function.");
+                        const launch = UI.button(div, 'Launch anyways', 'ui-med-btn');
+                        launch.addEventListener('click', function () {
+                            mod.launch(UI, fs, core, true, mod);
+                            UI.remove(div);
+                        });
+                        const close = UI.button(div, 'Close', 'ui-med-btn');
+                        close.addEventListener('click', function () {
+                            UI.remove(div);
+                        });
+                    }
                 } else {
                     console.warn(`${file.name} has no launch() export`);
                 }
@@ -77,18 +95,23 @@ export async function launch(UI, fs, Scripts) {
 
         const llmGo = await fs.read('/system/llm/prompt.txt');
         messages.push({
-            content: llmGo,
+            content: llmGo + ` Focused window: TextEdit. You DO NOT have permission to read this window's contents.
+To replace text: TextEdit: replace: text, newText
+To create a blank document: TextEdit: new: text`,
             role: "system"
         });
 
         messages.push({
-            content: "Hello! Introduce yourself. Keep your response short (under 20 words.)",
-            role: "user"
-        })
+            content: `I'm Chloe. My capabilities are limited, but I'll try my best!`,
+            role: "assistant"
+        });
 
         const menu = UI.create('div', document.body, 'taskbar-menu');
         menu.style.width = "300px";
         const messagebox = UI.create('div', menu);
+        const warn = UI.text(messagebox, "Chloe may make mistakes. Don't trust it for sensitive topics.");
+        warn.style.color = "#999";
+        warn.style.fontSize = "var(--font-size-ui)";
         messagebox.style.height = "400px";
         messagebox.style.overflow = "auto";
 
@@ -111,7 +134,7 @@ export async function launch(UI, fs, Scripts) {
                     const ai = await fs.read('/system/llm/startup.js');
                     let model = set.read('LLMModel');
                     if (!model) model = "QSmolLM2-1.7B-Instruct-q4f32_1-MLC"
-                    Scripts.loadModule(ai).then(async (mod) => {
+                    core.loadModule(ai).then(async (mod) => {
                         let readyResolve;
                         let ready = new Promise((resolve) => {
                             readyResolve = resolve;
@@ -151,15 +174,6 @@ export async function launch(UI, fs, Scripts) {
 
                 llmResponseTxt.innerText = "Chloe: " + response;
             });
-
-            let llmResponseTxt = UI.text(messagebox, 'Chloe: ');
-            let llmResponse = "";
-            const response = await UI.sendToLLM(messages, input.value, function (token) {
-                llmResponse += token;
-                llmResponseTxt.innerText = llmResponse;
-            });
-
-            llmResponseTxt.innerText = response;
         }
     }
 
@@ -200,7 +214,7 @@ export async function launch(UI, fs, Scripts) {
         const softBtn = UI.button(menu, 'Reboot without re-initializing', 'ui-main-btn wide');
         softBtn.addEventListener('click', () => {
             document.body.innerHTML = '';
-            Scripts.loadJS('/system/init.js');
+            core.loadJS('/system/init.js');
         });
 
         const taskrect = taskbar.getBoundingClientRect();
@@ -236,13 +250,25 @@ export async function launch(UI, fs, Scripts) {
         }
     });
 
-    const blob = await fs.read('/system/lib/wallpaper.jpg');
-    console.log(blob);
-    if (blob instanceof Blob) {
-        const imageUrl = URL.createObjectURL(blob);
-        document.body.style.backgroundImage = `url('${imageUrl}')`;
-    } else {
-        console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
+    if (await set.read('lowend') !== "true") {
+        const blob = await fs.read('/system/lib/wallpaper.jpg');
+        if (blob instanceof Blob) {
+            imageUrl = URL.createObjectURL(blob);
+            document.body.style.backgroundImage = `url('${imageUrl}')`;
+        } else {
+            console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
+        }
     }
+
     return ring;
+}
+
+export async function close() {
+    if (taskbar) {
+        UI.remove(taskbar);
+        document.body.style.backgroundImage = "unset";
+        if (imageUrl) {
+            URL.revokeObjectURL(imageUrl);
+        }
+    }
 }

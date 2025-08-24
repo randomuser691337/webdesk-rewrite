@@ -16,7 +16,7 @@ var wd = {
     },
     startLLM: async function () {
         const ai = await fs.read('/system/llm/startup.js');
-        Scripts.loadModule(ai).then(async (mod) => {
+        core.loadModule(ai).then(async (mod) => {
             UI.System.llmRing('loading');
             sys.LLMLoaded = "loading";
             let readyResolve;

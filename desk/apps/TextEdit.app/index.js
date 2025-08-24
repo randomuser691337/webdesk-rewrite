@@ -1,17 +1,30 @@
-export async function launch(UI, fs, Scripts, defaultlaunch) {
+export var name = "TextEdit";
+var core2;
+var codeToKillTask = function () {
+    console.log(`<i> there's NOTHING!!!!!!!!!!!!!!!!!!!!!!!`);
+}
+
+var win;
+
+export async function launch(UI, fs, core, defaultlaunch) {
+    core2 = core;
     async function open(path) {
         const bootcode = await fs.read(path);
-        const debugwin = UI.window('TextEdit');
-        debugwin.win.style.width = "600px";
-        debugwin.win.style.height = "600px";
+        win = UI.window('TextEdit');
+        codeToKillTask = function () {
+            core2.removeModule(id);
+            UI.remove(win.win);
+            win = undefined;
+        }
+        win.win.style.width = "600px";
 
-        const p = UI.text(debugwin.content, 'TextEdit');
-        const textbox = UI.create("textarea", debugwin.content);
+        const p = UI.text(win.content, 'TextEdit');
+        const textbox = UI.create("textarea", win.content);
         textbox.placeholder = "Write here...";
         textbox.style.width = "100%";
         textbox.style.height = "400px";
 
-        const savebutton = UI.button(debugwin.content, "Save");
+        const savebutton = UI.button(win.content, "Save");
         savebutton.onclick = async () => {
             const code = textbox.value;
             await fs.write(path, code, "text");
@@ -29,13 +42,18 @@ export async function launch(UI, fs, Scripts, defaultlaunch) {
             p.innerText = "This file is not a text file. It's meant to be opened with something else.";
         }
 
-        debugwin.updateWindow();
+        win.updateWindow();
     }
 
     if (defaultlaunch) {
         const code = await fs.read('/apps/Files.app/index.js');
-        const mod = await Scripts.loadModule(code);
-        const path = await mod.pickFile(UI, fs);
+        const mod = await core.loadModule(code);
+        const path = await mod.pickFile(UI, fs, core);
+        codeToKillTask = function () {
+            core2.removeModule(id);
+            mod.close();
+            win = undefined;
+        }
         if (path) {
             await open(path);
         } else {
@@ -46,4 +64,8 @@ export async function launch(UI, fs, Scripts, defaultlaunch) {
     return {
         open: open
     };
+}
+
+export async function close() {
+    codeToKillTask();
 }

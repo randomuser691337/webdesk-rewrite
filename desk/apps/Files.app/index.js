@@ -1,5 +1,24 @@
-export async function launch(UI, fs, Scripts) {
-    const win = UI.window('Files');
+var codeToKillTask = function () {
+    console.log(`<i> No windows were opened! I don't even have access to my own module! Fuck off!`);
+    return false;
+};
+export var name = "Files";
+
+export async function close() {
+    const go = codeToKillTask();
+    return go;
+}
+var core2;
+var win;
+
+export async function launch(UI, fs, core, unused, module) {
+    core2 = core;
+    win = UI.window('Files', module);
+    codeToKillTask = function () {
+        core2.removeModule(id);
+        UI.remove(win.win);
+        win = undefined;
+    };
     win.win.style.width = "600px";
     win.win.style.height = "400px";
     win.headertxt.innerHTML = "";
@@ -75,8 +94,8 @@ export async function launch(UI, fs, Scripts) {
             async function openfile() {
                 if (file.kind === "directory" && (file.path.endsWith('.app') || file.path.endsWith('.app'))) {
                     const code = await fs.read(file.path + '/index.js');
-                    const mod = await Scripts.loadModule(code);
-                    await mod.launch(UI, fs, Scripts, true);
+                    const mod = await core.loadModule(code);
+                    await mod.launch(UI, fs, core, true);
                 } else if (file.kind === "directory") {
                     nav(file.path);
                 } else {
@@ -98,21 +117,21 @@ export async function launch(UI, fs, Scripts) {
                         });
                     } else {
                         const code = await fs.read('/apps/TextEdit.app/index.js');
-                        const mod = await Scripts.loadModule(code);
+                        const mod = await core.loadModule(code);
                         const textedit = await mod.launch(UI, fs);
                         textedit.open(file.path);
                     }
                 }
             }
 
-            const button = UI.button(filelist, name, 'files-list');
+            const button = UI.button(filelist, name, 'list-item');
             button.addEventListener('dblclick', async function () {
                 await openfile();
             });
 
-            document.addEventListener('mousedown', function (event) {
+            button.addEventListener('mousedown', function (event) {
+                event.preventDefault();
                 if (event.button === 2) {
-                    event.preventDefault();
                     const contextMenu = UI.rightClickMenu(event);
 
                     const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn wide');
@@ -138,7 +157,7 @@ export async function launch(UI, fs, Scripts) {
 
     document.addEventListener('keydown', async (e) => {
         if ((e.shiftKey && e.ctrlKey && e.key === 'n') && UI.focusedWindow === win.win) {
-            const win2 = await launch(UI, fs, Scripts);
+            const win2 = await launch(UI, fs, core);
             win2.window.win.style.left = (win.win.offsetLeft + 20) + "px";
             win2.window.win.style.top = (win.win.offsetTop + 20) + "px";
             win2.window.click();
@@ -154,9 +173,15 @@ export async function launch(UI, fs, Scripts) {
     };
 }
 
-export async function pickFile(UI, fs, Scripts) {
+export async function pickFile(UI, fs, core) {
     return new Promise(async (resolve) => {
-        const win = UI.window('Files');
+        core2 = core;
+        win = UI.window('File Picker');
+        codeToKillTask = function () {
+            core2.removeModule(id);
+            UI.remove(win.win);
+            win = undefined;
+        };
         win.win.style.width = "600px";
         win.win.style.height = "400px";
         win.headertxt.innerHTML = "";
@@ -233,7 +258,7 @@ export async function pickFile(UI, fs, Scripts) {
                     name = `📄 ` + file.name;
                 }
 
-                const button = UI.button(filelist, name, 'files-list');
+                const button = UI.button(filelist, name, 'list-item');
                 button.addEventListener('dblclick', async function () {
                     if (file.kind === "directory") {
                         nav(file.path);

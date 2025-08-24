@@ -54,3 +54,11 @@ UI functions:
 
     - UI.focusedWindow
       - Reference to the currently focused window (if any)
+
+System functions:
+    - core.tasks
+      - Array with all the tasks/apps WebDesk is running.
+    - core.removeModule(id)
+      - Removes a module/task from core.tasks via its Task ID.
+      - Side note: All modules created with core.loadModule(JS code) have the id variable predefined.
+        - If you were to kill your app and you have the core accessible, all you'd have to do is core.removeModule(id).
