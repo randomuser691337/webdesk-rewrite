@@ -31,7 +31,7 @@ core.loadJS('/system/lib/socket.io.js');
                     } else {
                         sys.LLMLoaded = "unsupported";
                     }
-                    mod.launch(UI, fs, core);
+                    mod.launch(UI, fs, core, undefined, mod);
                 });
             });
         }
@@ -49,7 +49,7 @@ core.loadJS('/system/lib/socket.io.js');
             } else {
                 sys.LLMLoaded = "unsupported";
             }
-            mod.launch(UI, fs, core);
+            mod.launch(UI, fs, core, undefined, mod);
         });
     }
 })();

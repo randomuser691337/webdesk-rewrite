@@ -6,11 +6,11 @@ var codeToKillTask = function () {
 
 var win;
 
-export async function launch(UI, fs, core, defaultlaunch) {
+export async function launch(UI, fs, core, defaultlaunch, module) {
     core2 = core;
     async function open(path) {
         const bootcode = await fs.read(path);
-        win = UI.window('TextEdit');
+        win = UI.window('TextEdit', module);
         codeToKillTask = function () {
             core2.removeModule(id);
             UI.remove(win.win);
@@ -36,7 +36,7 @@ export async function launch(UI, fs, core, defaultlaunch) {
             }, 2000);
         };
 
-        textbox.value = bootcode;
+        textbox.textContent = bootcode;
 
         if (textbox.value === "[object File]") {
             p.innerText = "This file is not a text file. It's meant to be opened with something else.";

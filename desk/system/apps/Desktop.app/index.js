@@ -1,7 +1,9 @@
 export var name = "Desktop"
 var taskbar;
 var imageUrl;
+var core2;
 export async function launch(UI, fs, core) {
+    core2 = core;
     taskbar = UI.create('div', document.body, 'taskbar');
     const left = UI.create('div', taskbar, 'window-header-nav');
     const right = UI.create('div', taskbar, 'window-header-text');
@@ -94,15 +96,20 @@ export async function launch(UI, fs, core) {
         let messages = []
 
         const llmGo = await fs.read('/system/llm/prompt.txt');
-        messages.push({
-            content: llmGo + ` Focused window: TextEdit. You DO NOT have permission to read this window's contents.
-To replace text: TextEdit: replace: text, newText
-To create a blank document: TextEdit: new: text`,
-            role: "system"
-        });
+        if (UI.focusedWindow.name) {
+            messages.push({
+                content: llmGo + ` User is currently using ` + UI.focusedWindow.name + ". Contents of it's window: " + UI.focusedWindow.outerHTML,
+                role: "system"
+            });
+        } else {
+            messages.push({
+                content: llmGo + ` User isn't focused on any apps.`,
+                role: "system"
+            });
+        }
 
         messages.push({
-            content: `I'm Chloe. My capabilities are limited, but I'll try my best!`,
+            content: `I'm Chloe. My capabilities are limited, but I'll try my best.`,
             role: "assistant"
         });
 
@@ -133,7 +140,7 @@ To create a blank document: TextEdit: new: text`,
                     set.del('chloe');
                     const ai = await fs.read('/system/llm/startup.js');
                     let model = set.read('LLMModel');
-                    if (!model) model = "QSmolLM2-1.7B-Instruct-q4f32_1-MLC"
+                    if (!model) model = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC"
                     core.loadModule(ai).then(async (mod) => {
                         let readyResolve;
                         let ready = new Promise((resolve) => {
@@ -265,6 +272,7 @@ To create a blank document: TextEdit: new: text`,
 
 export async function close() {
     if (taskbar) {
+        core2.removeModule(id);
         UI.remove(taskbar);
         document.body.style.backgroundImage = "unset";
         if (imageUrl) {

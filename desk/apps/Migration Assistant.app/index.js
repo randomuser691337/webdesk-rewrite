@@ -1,12 +1,13 @@
 export var name = "Migration Assistant";
+var win;
+var setupflexcontainer;
+var core2;
+var imageUrl;
 var codeToKillTask = function () {
     console.log(`<i> there's NOTHING!!!!!!!!!!!!!!!!!!!!!!!`);
 }
-let win;
-let setupflexcontainer;
-let core2;
-let imageUrl;
-export async function launch(UI, fs, core) {
+
+export async function launch(UI, fs, core, undefined, module) {
     core2 = core;
     codeToKillTask = function () {
         core2.removeModule(id);
@@ -50,7 +51,7 @@ export async function migratePane(UI, fs, core) {
     if (alrSetup === "true") {
         const btn = UI.button(setup, "Exit", "ui-main-btn");
         btn.addEventListener('click', () => {
-            UI.remove(setupflexcontainer);
+            close();
         });
     }
 

@@ -75,6 +75,7 @@ var UI = {
     },
     window: function (title, module) {
         const win = this.create("div", document.body, "window");
+        win.setAttribute("name", title);
         const header = this.create("div", win, "window-header window-draggable");
         const headerbtns = this.create("div", header, "window-header-nav");
         const headertxt = this.create("div", header, "window-header-text");
@@ -180,7 +181,7 @@ var UI = {
             document.addEventListener('click', () => {
                 UI.remove(menu);
             }, { once: true });
-        }, 500);
+        }, 100);
 
         return menu;
     },

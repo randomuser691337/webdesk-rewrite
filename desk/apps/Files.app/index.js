@@ -100,25 +100,14 @@ export async function launch(UI, fs, core, unused, module) {
                     nav(file.path);
                 } else {
                     if (file.path.endsWith('.png') || file.path.endsWith('.jpg') || file.path.endsWith('.jpeg') || file.path.endsWith('.gif')) {
-                        fs.read(file.path).then(blob => {
-                            const win = UI.window(file.name);
-                            win.content.style = "backdrop-filter: blur(0px); padding: 0px";
-                            win.win.style.width = "450px";
-                            const img = new Image();
-                            const url = URL.createObjectURL(blob);
-                            img.onload = () => {
-                                URL.revokeObjectURL(url);
-                            };
-                            img.src = url;
-                            img.style = "max-width: 100%";
-                            win.content.appendChild(img);
-                        }).catch(err => {
-                            console.error(`Failed to read ${file.name}:`, err);
-                        });
+                        const code = await fs.read('/apps/Preview.app/index.js');
+                        const mod = await core.loadModule(code);
+                        const preview = await mod.launch(UI, fs, core);
+                        preview.open(file.path, false, file.path, undefined, mod);
                     } else {
                         const code = await fs.read('/apps/TextEdit.app/index.js');
                         const mod = await core.loadModule(code);
-                        const textedit = await mod.launch(UI, fs);
+                        const textedit = await mod.launch(UI, fs, core, undefined, mod);
                         textedit.open(file.path);
                     }
                 }
