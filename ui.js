@@ -1,11 +1,46 @@
 var windowHighestZIndex = 0;
-
+var notifPane;
 var UI = {
+    LLMName: "Chloe",
     create: function (eltype, parent, classname) {
         var el = document.createElement(eltype);
         if (classname) el.classList = classname;
         if (parent) parent.appendChild(el);
         return el;
+    },
+    menuSlide: function (element, options) {
+        /* 
+            options variable:
+            - true: show element via slide
+            - false: hide element via slide
+            - "setup": adds proper stylings to element, default hidden
+            - "stop": removes proper stylings from element 
+            - undefined: toggle
+        */
+
+        if (options === true) {
+            element.style.transform = "translateX(0%)";
+            element.style.opacity = "1";
+        } else if (options === "setup") {
+            element.style.transition = "transform 0.25s ease, opacity 0.25s ease";
+            element.style.transform = "translateX(-100%)";
+            element.style.opacity = "0";
+        } else if (options === "stop") {
+            element.style.transition = "";
+            element.style.transform = "";
+            element.style.opacity = "";
+        } else if (options === false) {
+            element.style.transform = "translateX(-100%)";
+            element.style.opacity = "0";
+        } else {
+            if (element.style.transform === "translateX(0%)") {
+                element.style.transform = "translateX(-100%)";
+                element.style.opacity = "0";
+            } else {
+                element.style.transform = "translateX(0%)";
+                element.style.opacity = "1";
+            }
+        }
     },
     button: function (parent, text, classname) {
         var btn = this.create("button", parent, classname + " webdesk-ui-styling noselect");
@@ -17,8 +52,9 @@ var UI = {
                 btn.click();
             }
         });
-        if (typeof classname === "string" && classname.includes("ui-main-btn")) {
-            const txt = this.create("div", btn, "ui-main-btn-filler noselect");
+
+        if (typeof classname === "string" && classname.includes("ui-big-btn")) {
+            const txt = this.create("div", btn, "ui-big-btn-filler noselect");
             txt.textContent = text;
             btn.Filler = txt;
         } else if (typeof classname === "string" && classname.includes("ui-small-btn")) {
@@ -31,6 +67,47 @@ var UI = {
             btn.Filler = txt;
         } else {
             btn.textContent = text;
+        }
+
+        if (btn.Filler) {
+            const b = btn.Filler;
+            if (sys.lowgfxMode === true) {
+                b.style.transition = "0.04s ease-in-out";
+                b.onmouseenter = (e) => {
+                    e.target.style.background = "rgba(var(--ui-accent), 0.25)";
+                };
+
+                b.onmouseleave = (e) => {
+                    e.target.style.background = "rgba(var(--ui-accent), 0.2)";
+                };
+
+                b.onmousedown = (e) => {
+                    e.target.style.background = "rgba(var(--ui-accent), 0.3)";
+                };
+            } else {
+                b.onmouseleave = (e) => {
+                    e.target.style.background = "rgba(var(--ui-accent), 0.2)";
+                };
+
+                b.addEventListener("mousemove", (e) => {
+                    const { left, top } = e.target.getBoundingClientRect();
+                    const x = e.clientX - left;
+                    const y = e.clientY - top;
+                    const accent = 'rgba(var(--ui-accent),';
+                    const bg =
+                        e.buttons === 1
+                            ? `radial-gradient(circle at ${x}px ${y}px, ${accent}0.4), ${accent}0.2)`
+                            : `radial-gradient(circle at ${x}px ${y}px, ${accent}0.3), ${accent}0.2)`;
+                    e.target.style.background = bg;
+                });
+
+                b.addEventListener("mousedown", (e) => {
+                    const rect = e.target.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                });
+            }
         }
 
         btn.dropBtnDecor = function () {
@@ -55,6 +132,48 @@ var UI = {
         }
         return input;
     },
+    notif: async function (title, body, icon) {
+        const notif = UI.create('div', notifPane, 'wd-notif');
+        const closeBtn = UI.button(notif, 'x', 'wd-notif-close-button');
+        closeBtn.addEventListener('click', () => {
+            UI.remove(notif);
+        });
+        const wdNotifToast = UI.create('div', notif, 'wd-notif-toast');
+        let iconImg;
+        if (icon) {
+            iconImg = UI.img(wdNotifToast, icon, 'wd-notif-img');
+        } else {
+            iconImg = UI.img(wdNotifToast, '/system/lib/img/notification-toast.svg', 'wd-notif-img');
+        }
+
+        const contents = UI.create('div', notif, 'wd-notif-contents');
+        const titleDiv = UI.create('div', contents, 'wd-notif-title');
+        const name = UI.create('div', titleDiv, 'wd-notif-title-name bold');
+        const time = UI.create('div', titleDiv, 'wd-notif-title-time smalltxt');
+        name.innerText = title;
+        time.innerText = UI.getDate();
+        const mainDiv = UI.create('div', contents);
+        if (body) {
+            mainDiv.innerText = body;
+        }
+
+        return { notif, name, time, mainDiv, titleDiv, iconImg, contents, wdNotifToast }
+    },
+    getDate: function (type) {
+        const now = new Date();
+        if (type === "military") {
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        } else {
+            let hours = now.getHours();
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            return `${hours}:${minutes} ${ampm}`;
+        }
+    },
     sendToLLM: async function (messages, userContent, token) {
         try {
             const result = await sys.LLM.send(messages, userContent, token);
@@ -75,7 +194,6 @@ var UI = {
     },
     window: function (title, module) {
         const win = this.create("div", document.body, "window");
-        win.setAttribute("name", title);
         const header = this.create("div", win, "window-header window-draggable");
         const headerbtns = this.create("div", header, "window-header-nav");
         const headertxt = this.create("div", header, "window-header-text");
@@ -83,13 +201,6 @@ var UI = {
         headertxt.textContent = title;
         windowHighestZIndex += 1;
         win.style.zIndex = windowHighestZIndex;
-        win.addEventListener("mousedown", () => {
-            if (parseInt(win.style.zIndex) !== windowHighestZIndex) {
-                windowHighestZIndex += 1;
-                win.style.zIndex = windowHighestZIndex;
-            }
-            UI.focusedWindow = win;
-        });
 
         const closeBtn = this.button(headerbtns, '', "window-btn close-btn");
         const minBtn = this.button(headerbtns, '', "window-btn min-btn");
@@ -144,7 +255,18 @@ var UI = {
             }
         });
 
-        return { win, header, content, headertxt, headerbtns, buttons: { closeBtn, minBtn, maxBtn, container: headerbtns }, updateWindow };
+        const winFinal = { win, header, content, headertxt, headerbtns, title, buttons: { closeBtn, minBtn, maxBtn, container: headerbtns }, updateWindow }
+        win.addEventListener("mousedown", () => {
+            if (parseInt(win.style.zIndex) !== windowHighestZIndex) {
+                windowHighestZIndex += 1;
+                win.style.zIndex = windowHighestZIndex;
+            }
+            UI.focusedWindow = winFinal;
+        });
+
+        win.click();
+        win.dataset.name = title;
+        return winFinal;
     },
     img: async function (parent, path, classname) {
         const blob = await fs.read(path);
@@ -157,6 +279,9 @@ var UI = {
     },
     changevar: function (varname, value) {
         document.documentElement.style.setProperty(`--${varname}`, value);
+    },
+    readvar: function (varname) {
+        return getComputedStyle(document.documentElement).getPropertyValue(`--${varname}`).trim();
     },
     remove: function (element) {
         element.remove();
@@ -262,12 +387,90 @@ var UI = {
                 UI.changevar('ui-transparancy', '1');
                 UI.changevar('big-shadow', 'none');
                 UI.changevar('small-shadow', 'none');
+                sys.lowgfxMode = true;
             } else {
                 UI.changevar('main-ui-blur', '8px');
                 UI.changevar('ui-transparancy', '0.85');
                 UI.changevar('big-shadow', '0 6px 12px rgba(0, 0, 0, 0.2)')
                 UI.changevar('small-shadow', '1px 0 8px rgba(0, 0, 0, 0.12)');
+                sys.lowgfxMode = false;
             }
+        },
+        generateBlobWallpaper: function () {
+            const canvas = document.createElement('canvas');
+            const retinaScalingFactor = window.devicePixelRatio;
+            canvas.width = window.screen.width * retinaScalingFactor;
+            canvas.height = window.screen.height * retinaScalingFactor;
+            const ctx = canvas.getContext('2d');
+
+            // pick 4–6 very different colors
+            const colors = [];
+
+            function selectRandomColor() {
+                const predefinedColors = [0, 30, 60, 120, 180, 240, 270, 300];
+                let hue;
+                do {
+                    hue = predefinedColors[Math.floor(Math.random() * predefinedColors.length)];
+                } while (colors.some(c => c.startsWith(`hsl(${hue},`)));
+                return hue;
+            }
+
+            while (colors.length < 5) {
+                const hue = selectRandomColor();
+                const sat = 100;
+                let light = 50;
+                if (UI.readvar('text') === "#fff") {
+                    light = 30;
+                } else {
+                    light = 80;
+                }
+                colors.push(`hsl(${hue},${sat}%,${light}%)`);
+            }
+
+            colors[Math.floor(Math.random() * colors.length)] = `rgb(${UI.readvar('ui-accent')})`;
+
+            // fill background with the first color
+            ctx.fillStyle = colors[0];
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // paint big radial gradients of other colors
+            for (let i = 1; i < colors.length; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const maxR = Math.max(canvas.width, canvas.height);
+                const radius = maxR * (0.4 + Math.random() * 0.6); // huge gradient
+
+                const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                grad.addColorStop(0, colors[i]);
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+
+            // soft blend using globalAlpha & composite
+            ctx.globalAlpha = 0.5;
+            for (let j = 0; j < 4; j++) {
+                ctx.drawImage(canvas, Math.random() * 10 - 5, Math.random() * 10 - 5);
+            }
+            ctx.globalAlpha = 1;
+
+            // very subtle noise
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const n = (Math.random() - 0.5) * 4; // ±2 noise
+                data[i] += n;
+                data[i + 1] += n;
+                data[i + 2] += n;
+            }
+            ctx.putImageData(imageData, 0, 0);
+
+            // apply as page background
+            document.body.style.backgroundImage = `url(${canvas.toDataURL('image/png')})`;
+            canvas.remove();
         }
+
     }
 }
+
+notifPane = UI.create('div', document.body, 'notif-pane');

@@ -12,12 +12,12 @@ core.loadJS('/system/lib/socket.io.js');
             const setup = UI.create('div', setupflexcontainer, 'setup-window');
             UI.text(setup, "Welcome to WebDesk!");
             UI.text(setup, "WebDesk's server is down, so setup can't continue. Continue as guest?");
-            const btn = UI.button(setup, "Reboot", "ui-main-btn");
+            const btn = UI.button(setup, "Reboot", "ui-big-btn");
             btn.addEventListener('click', () => {
                 window.location.reload();
             });
 
-            const guestBtn = UI.button(setup, "Guest", "ui-main-btn");
+            const guestBtn = UI.button(setup, "Guest", "ui-big-btn");
             guestBtn.addEventListener('click', async () => {
                 await set.write('setupdone', 'true');
                 await set.write('guest', 'true');
@@ -35,10 +35,30 @@ core.loadJS('/system/lib/socket.io.js');
                 });
             });
         }
+        const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+        if (prefersDarkScheme.matches) {
+            UI.System.darkMode();
+            set.write('appearance', 'auto');
+        } else {
+            UI.System.lightMode();
+            set.write('appearance', 'auto');
+        }
     } else {
         const acc = await set.read('accent');
+        const LLMName = await set.read('LLMName');
+        const appear = await set.read('appearance');
+        if (LLMName) UI.LLMName = LLMName;
         if (acc) UI.changevar('ui-accent', acc);
-        if (await set.read('appearance') === "dark") UI.System.darkMode();
+        if (appear === "dark") {
+            UI.System.darkMode();
+        } else if (appear === "auto") {
+            const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+            if (prefersDarkScheme.matches) {
+                UI.System.darkMode();
+            } else {
+                UI.System.lightMode();
+            }
+        }
         if (await set.read('lowend') === "true") UI.System.lowgfxMode(true);
         const desktop = await fs.read('/system/apps/Desktop.app/index.js');
         core.loadModule(desktop).then(async (mod) => {

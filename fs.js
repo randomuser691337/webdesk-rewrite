@@ -60,11 +60,18 @@ fs = {
             worker.postMessage({ optype: "ls", uID, data: path });
         });
     },
-    rm: function (path) {
+    rm: function (path, recursive = false) {
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });
-            worker.postMessage({ optype: "rm", uID, data: path });
+            worker.postMessage({ optype: "rm", uID, data: path, data2: recursive });
+        });
+    },
+    mkdir: function (path) {
+        const uID = gen(0, 9999);
+        return new Promise((resolve, reject) => {
+            currentops.push({ uID, resolve, reject });
+            worker.postMessage({ optype: "mkdir", uID, data: path });
         });
     },
     erase: function (path) {

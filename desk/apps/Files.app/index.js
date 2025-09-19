@@ -32,6 +32,12 @@ export async function launch(UI, fs, core, unused, module) {
     const sidebarcontent = UI.create('div', sidebar, 'content');
     sidebarcontent.style.paddingTop = "0px";
     UI.create('span', sidebarcontent, 'smalltxt').textContent = "Favorites";
+
+    const buttonhome = UI.button(sidebarcontent, 'Home', 'list-item');
+    buttonhome.onclick = () => {
+        nav("/user/");
+    };
+
     const container = UI.create('div', win.content, 'window-split-content');
     const crumbs = UI.create('div', container, 'window-draggable');
     const filelist = UI.create('div', container);
@@ -118,28 +124,42 @@ export async function launch(UI, fs, core, unused, module) {
                 await openfile();
             });
 
-            button.addEventListener('mousedown', function (event) {
+            button.addEventListener('contextmenu', function (event) {
                 event.preventDefault();
-                if (event.button === 2) {
-                    const contextMenu = UI.rightClickMenu(event);
+                const contextMenu = UI.rightClickMenu(event);
 
-                    const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn wide');
-                    openButton.onclick = async () => {
+                const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn wide');
+                openButton.onclick = async () => {
+                    if (file.kind === "directory") {
+                        await nav(file.path);
+                    } else {
+                        await openfile();
+                    }
+                    contextMenu.remove();
+                };
+
+                const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn wide');
+                deleteButton.onclick = async () => {
+                    contextMenu.remove();
+                    const div = UI.create('div', document.body, 'cm');
+                    UI.text(div, `Delete ${file.name}?`, 'bold');
+                    UI.text(div, 'Deleted files cannot be recovered.');
+                    const yesBtn = UI.button(div, 'Delete', 'ui-small-btn');
+                    yesBtn.onclick = async () => {
+                        UI.remove(div);
                         if (file.kind === "directory") {
-                            await nav(file.path);
+                            await fs.rm(file.path, true);
                         } else {
-                            await openfile();
+                            await fs.rm(file.path);
                         }
-                        contextMenu.remove();
+                        nav(currentPath);
                     };
 
-                    const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn wide');
-                    deleteButton.onclick = async () => {
-                        await fs.rm(file.path);
-                        nav(currentPath);
-                        contextMenu.remove();
+                    const noBtn = UI.button(div, 'Cancel', 'ui-small-btn');
+                    noBtn.onclick = () => {
+                        UI.remove(div);
                     };
-                }
+                };
             });
         });
     }
@@ -203,7 +223,6 @@ export async function pickFile(UI, fs, core) {
         win.header.style.flex = "none";
         sidebarcontent.style.flex = "1";
         sidebarcontent.style.overflow = "auto";
-
         win.header.innerHTML = "";
         UI.create('span', win.header, 'smalltxt').textContent = "Select a file";
         const cancelButton = UI.button(win.header, 'Cancel', 'ui-small-btn wide');

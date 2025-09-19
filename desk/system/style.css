@@ -6,9 +6,10 @@
     --ui-tertiary: 235, 235, 235;
     --ui-accent: 0, 122, 255;
     --text: #000;
+    --text-secondary: #999;
     --text-inverse: #fff;
     --font-fam: "Poppins", sans-serif;
-    --font-size-text: 16px;
+    --font-size-text: 14px;
     --font-size-ui: 14px;
     --font-size-small: 12px;
     --main-ui-blur: 8px;
@@ -73,8 +74,8 @@ input,
     box-shadow: var(--big-shadow);
     overflow: auto !important;
     resize: both;
-    max-width: 95%;
-    max-height: 95%;
+    max-width: 92%;
+    max-height: 92%;
 }
 
 .window-header {
@@ -270,7 +271,7 @@ input,
     opacity: 1;
 }
 
-.ui-main-btn {
+.ui-big-btn {
     background-color: rgba(var(--ui-primary), 1.0);
     color: var(--text);
     border: none;
@@ -283,27 +284,21 @@ input,
     overflow: hidden;
 }
 
-.ui-main-btn:active {
-    transform: scale(0.95);
+.ui-big-btn:active {
     border: 1px solid rgba(var(--ui-accent), 0.45);
 }
 
-.ui-main-btn:hover {
+.ui-big-btn:hover {
     box-shadow: 0 0 2px 0px rgba(var(--ui-accent), 0.2);
     border: 1px solid rgba(var(--ui-accent), 0.55);
 }
 
-.ui-main-btn-filler {
+.ui-big-btn-filler {
     /* background: radial-gradient(rgba(var(--ui-accent), 0.1), rgba(var(--ui-accent), 0.08)); */
     background: rgba(var(--ui-accent), 0.2);
     width: 100%;
     padding: 6px 8px;
     box-sizing: border-box;
-    transition: 0.06s ease-in-out;
-}
-
-.ui-main-btn-filler:hover {
-    background: rgba(var(--ui-accent), 0.25);
 }
 
 .window-footer {
@@ -324,7 +319,7 @@ input,
     border-radius: var(--round-secondary);
     box-sizing: border-box;
     margin: 1px;
-    transition: 0.08s ease-in-out;
+    transition: 0.04s ease-in-out;
     padding: 0px;
     overflow: hidden;
     border: 1px solid rgba(var(--ui-accent), 0.4);
@@ -333,21 +328,21 @@ input,
 }
 
 .ui-med-btn {
-    background-color: rgba(var(--ui-primary), 0.7);
+    background-color: rgba(var(--ui-primary), 1.0);
     color: var(--text);
     border: none;
     border-radius: var(--round-small);
     box-sizing: border-box;
     margin: 1px;
-    transition: 0.08s ease-in-out;
+    transition: 0.04s ease-in-out;
     padding: 0px;
     overflow: hidden;
     border: 1px solid rgba(var(--ui-accent), 0.4);
 }
 
 .ui-med-btn:active {
-    background-color: rgba(var(--ui-secondary), 0.9);
-    border: 1px solid rgba(var(--ui-accent), 0.5);
+    background-color: rgba(var(--ui-secondary), 1.0);
+    border: 1px solid rgba(var(--ui-accent), 0.45);
 }
 
 .ui-med-btn-filler {
@@ -355,42 +350,36 @@ input,
     width: 100%;
     padding: 4px 6px;
     box-sizing: border-box;
-    transition: 0.06s ease-in-out;
     font-size: var(--font-size-ui) !important;
 }
 
-.ui-med-btn-filler:hover {
-    background-color: rgba(var(--ui-accent), 0.25);
+.ui-med-btn-filler:active {
+    background-color: rgba(var(--ui-accent), 0.3);
 }
 
 .ui-small-btn {
-    background-color: rgba(var(--ui-primary), 0.7);
+    background-color: rgba(var(--ui-primary), 1.0);
     color: var(--text);
     border: none;
     border-radius: var(--round-small);
     box-sizing: border-box;
     margin: 1px;
-    transition: 0.06s ease-in-out;
+    transition: 0.04s ease-in-out;
     padding: 0px;
     overflow: hidden;
     border: 1px solid rgba(var(--ui-accent), 0.2);
 }
 
 .ui-small-btn:active {
-    background-color: rgba(var(--ui-secondary), 0.85);
+    background-color: rgba(var(--ui-secondary), 1.0);
 }
 
 .ui-small-btn-filler {
-    background-color: rgba(var(--ui-accent), 0.1);
+    background-color: rgba(var(--ui-accent), 0.2);
     width: 100%;
     padding: 4px 6px;
     box-sizing: border-box;
-    transition: 0.06s ease-in-out;
     font-size: var(--font-size-small) !important;
-}
-
-.ui-small-btn-filler:hover {
-    background-color: rgba(var(--ui-accent), 0.15);
 }
 
 .wide {
@@ -467,6 +456,17 @@ input,
     z-index: 1;
 }
 
+.sidebar-compacted {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    bottom: 0px;
+    width: 180px;
+    z-index: 1000;
+    height: 100%;
+    background-color: rgba(var(--ui-primary), 1.0);
+}
+
 .window-split-content {
     flex-grow: 1;
     background-color: rgba(var(--ui-primary), 1.0);
@@ -480,6 +480,7 @@ input,
 .box-group {
     padding: 8px;
     background-color: rgba(var(--ui-secondary), 0.7);
+    border: 1px solid rgba(var(--ui-tertiary), 1.0);
     border-radius: var(--round-secondary);
     width: 100%;
     box-sizing: border-box;
@@ -503,7 +504,7 @@ input,
 
 .smalltxt {
     font-size: var(--font-size-small);
-    color: #999;
+    color: var(--text-secondary);
     font-weight: 600;
 }
 
@@ -652,6 +653,109 @@ input,
         bottom: 60px;
         opacity: 100%;
     }
+}
+
+.notif-pane {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9998;
+    max-width: 300px;
+    max-height: calc(100vh - 40px);
+    overflow: hidden;
+}
+
+.wd-notif {
+    border-radius: var(--round-main);
+    padding: 10px;
+    width: 300px;
+    background-color: rgba(var(--ui-primary), var(--ui-transparancy));
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    box-shadow: var(--big-shadow);
+    box-sizing: border-box;
+    backdrop-filter: blur(var(--main-ui-blur));
+    --webkit-backdrop-filter: blur(var(--main-ui-blur));
+    position: relative; /* Add this to allow absolute positioning of child */
+    overflow: visible;  /* Allow child to overflow */
+}
+
+.wd-notif-close-button {
+    position: absolute; /* Change to absolute for positioning inside .wd-notif */
+    left: -12px; 
+    top: -12px;
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    background-color: rgba(var(--ui-primary), 0.8);
+    backdrop-filter: blur(var(--main-ui-blur));
+    --webkit-backdrop-filter: blur(var(--main-ui-blur));
+    box-shadow: var(--small-shadow);
+    display: none;
+    border: 1px solid rgba(var(--ui-secondary), 0.9);
+    color: var(--text);
+    font-weight: 600;
+    z-index: 1; /* Ensure it's above content */
+}
+
+.wd-notif-close-button:active {
+    transform: scale(0.9);
+    background-color: rgba(var(--ui-primary), 0.7);
+}
+
+.wd-notif:hover .wd-notif-close-button {
+    display: block;
+}
+
+.wd-notif-toast {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wd-notif-img {
+	width: 32px;
+    height: 32px;
+    border-radius: var(--round-small);
+}
+
+.wd-notif-contents {
+	margin-left: 8px;
+    flex: 1;
+  	min-width: 0;
+}
+
+p {
+	margin: 0px;
+    padding: 0px;
+}
+
+.wd-notif-title {
+	display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.wd-notif-title-name {
+    display: flex;
+    user-select: none;
+    text-align: left;
+    align-items: center;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+.wd-notif-title-time {
+    display: flex;
+    text-align: right;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    user-select: none;
+    font-size: var(--font-size-small);
 }
 
 /* Thanks to tcp_kitty on Discord */

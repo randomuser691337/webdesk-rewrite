@@ -7,11 +7,11 @@ export async function launch(UI, fs, core) {
     taskbar = UI.create('div', document.body, 'taskbar');
     const left = UI.create('div', taskbar, 'window-header-nav');
     const right = UI.create('div', taskbar, 'window-header-text');
-    const appBTN = UI.button(left, 'Apps', 'ui-main-btn');
+    const appBTN = UI.button(left, 'Apps', 'ui-big-btn');
     const llmBTN = UI.button(left, '', 'ring-btn');
     const contLLM = UI.create('div', llmBTN, 'waiting');
     const ring = UI.create('div', contLLM, 'ring');
-    const contBTN = UI.button(right, 'Controls', 'ui-main-btn');
+    const contBTN = UI.button(right, 'Controls', 'ui-big-btn');
     if (sys.LLMLoaded === "unsupported") {
         llmBTN.style.display = "none";
     }
@@ -54,10 +54,27 @@ export async function launch(UI, fs, core) {
         }
         const items = await fs.ls('/system/apps/Desktop.app/Items');
         for (const file of items) {
-            const btn = UI.button(menu, file.name, 'ui-main-btn wide');
+            const btn = UI.button(menu, file.name, 'ui-med-btn wide');
             btn.addEventListener('click', async () => {
                 const path = await fs.read(file.path);
                 const code = await fs.read(path);
+                if (code === null) {
+                    const menu = UI.create('div', document.body, 'cm');
+                    UI.text(menu, `Couldn't open ${file.name}`, 'bold');
+                    UI.text(menu, `${file.name} is corrupted or deleted.`);
+                    const rm = UI.button(menu, 'Remove app', 'ui-med-btn');
+                    rm.addEventListener('click', function () {
+                        fs.del(file.path);
+                        fs.del(path.substring(0, path.lastIndexOf('/')), true);
+                        UI.remove(menu);
+                    });
+                    const close = UI.button(menu, 'Close', 'ui-med-btn');
+                    close.addEventListener('click', function () {
+                        UI.remove(menu);
+                    });
+                    closeCurrentMenu();
+                    return;
+                }
                 const mod = await core.loadModule(code);
 
                 if (typeof mod.launch === 'function') {
@@ -96,29 +113,34 @@ export async function launch(UI, fs, core) {
         let messages = []
 
         const llmGo = await fs.read('/system/llm/prompt.txt');
-        if (UI.focusedWindow.name) {
+
+        try {
             messages.push({
-                content: llmGo + ` User is currently using ` + UI.focusedWindow.name + ". Contents of it's window: " + UI.focusedWindow.outerHTML,
+                content: `Your name is ${UI.LLMName}` + llmGo,
                 role: "system"
             });
-        } else {
+
             messages.push({
-                content: llmGo + ` User isn't focused on any apps.`,
+                role: "user",
+                content: `Focused window info:\nTitle: ${UI.focusedWindow.title}\nContent:\n${UI.focusedWindow.content.outerHTML}`
+            });
+        } catch (error) {
+            console.log(error);
+            messages.push({
+                content: `Your name is ${UI.LLMName}` + llmGo,
                 role: "system"
+            });
+
+            messages.push({
+                role: "user",
+                content: `No windows accessible.`
             });
         }
-
-        messages.push({
-            content: `I'm Chloe. My capabilities are limited, but I'll try my best.`,
-            role: "assistant"
-        });
 
         const menu = UI.create('div', document.body, 'taskbar-menu');
         menu.style.width = "300px";
         const messagebox = UI.create('div', menu);
-        const warn = UI.text(messagebox, "Chloe may make mistakes. Don't trust it for sensitive topics.");
-        warn.style.color = "#999";
-        warn.style.fontSize = "var(--font-size-ui)";
+        const warn = UI.text(messagebox, UI.LLMName + " may make mistakes. Don't trust it for sensitive topics.", 'smalltxt bold');
         messagebox.style.height = "400px";
         messagebox.style.overflow = "auto";
 
@@ -132,11 +154,11 @@ export async function launch(UI, fs, core) {
 
         if (sys.LLMLoaded !== true) {
             if (sys.LLMLoaded === false) {
-                UI.text(messagebox, "Chloe's deactivated.");
+                UI.text(messagebox, UI.LLMName + "'s deactivated.");
                 UI.text(messagebox, "Would you like to reactivate her?");
-                const button = UI.button(messagebox, 'Reactivate', 'ui-main-btn');
+                const button = UI.button(messagebox, 'Reactivate', 'ui-big-btn');
                 button.addEventListener('click', async function () {
-                    messagebox.innerHTML = "<p>You reactivated Chloe.</p><p>Loading...</p>";
+                    messagebox.innerHTML = `<p>You reactivated ${UI.LLMName}.</p><p>Loading...</p>`;
                     set.del('chloe');
                     const ai = await fs.read('/system/llm/startup.js');
                     let model = set.read('LLMModel');
@@ -156,30 +178,31 @@ export async function launch(UI, fs, core) {
                     });
                 });
             } else {
-                UI.text(messagebox, "Chloe's loading...");
-                UI.text(messagebox, "She'll be with you in a second.");
+                UI.text(messagebox, UI.LLMName + "'s loading...");
+                UI.text(messagebox, "It'll be with you in a second.");
             }
 
-            const closeBtn = UI.button(messagebox, 'Close', 'ui-main-btn');
+            const closeBtn = UI.button(messagebox, 'Close', 'ui-big-btn');
             closeBtn.addEventListener('click', async function () {
                 closeCurrentMenu();
             });
         } else {
             const layout = UI.leftRightLayout(menu);
             const input = UI.create('input', layout.left, 'ui-main-input wide');
-            input.placeholder = "Ask Chloe anything...";
+            input.placeholder = "Message";
             const btn = UI.button(layout.right, 'Send', 'ui-med-btn');
 
             btn.addEventListener('click', async function () {
                 UI.text(messagebox, 'You: ' + input.value);
-                let llmResponseTxt = UI.text(messagebox, 'Chloe: ');
+                input.value = "";
+                let llmResponseTxt = UI.text(messagebox, `${UI.LLMName}: `);
                 let llmResponse = "";
                 const response = await UI.sendToLLM(messages, input.value, function (token) {
                     llmResponse += token;
-                    llmResponseTxt.innerText = "Chloe: " + llmResponse;
+                    llmResponseTxt.innerText = `${UI.LLMName}: ` + llmResponse;
                 });
 
-                llmResponseTxt.innerText = "Chloe: " + response;
+                llmResponseTxt.innerText = `${UI.LLMName}: ` + response;
             });
         }
     }
@@ -213,12 +236,12 @@ export async function launch(UI, fs, core) {
             }
         });
 
-        const uploadBtn = UI.button(menu, 'Upload File', 'ui-main-btn wide');
+        const uploadBtn = UI.button(menu, 'Upload File', 'ui-big-btn wide');
         uploadBtn.addEventListener('click', () => {
             input.click();
         });
 
-        const softBtn = UI.button(menu, 'Reboot without re-initializing', 'ui-main-btn wide');
+        const softBtn = UI.button(menu, 'Reboot without re-initializing', 'ui-big-btn wide');
         softBtn.addEventListener('click', () => {
             document.body.innerHTML = '';
             core.loadJS('/system/init.js');
@@ -264,6 +287,7 @@ export async function launch(UI, fs, core) {
             document.body.style.backgroundImage = `url('${imageUrl}')`;
         } else {
             console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
+            UI.System.generateBlobWallpaper();
         }
     }
 

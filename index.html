@@ -15,6 +15,7 @@
 
         var core = {
             latestVersion: '0.3.3',
+            lowgfxMode: false,
             incrementTask: 0,
             tasks: [],
             onTaskStart: [],
@@ -69,7 +70,7 @@
             bootloader.type = "module";
             bootloader.textContent = `
             import { unzipSync } from "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js";
-            async function extractZipToOPFS(zipFile) {
+            async function extractZipToOPFS(zipFile, div) {
                 console.log('FORCE UPDATE ENABLED. TURN OFF BEFORE PRODUCTION');
                 const buffer = new Uint8Array(await zipFile.arrayBuffer());
                 const files = unzipSync(buffer);
@@ -100,6 +101,7 @@
 
                 console.log("ZIP extracted to OPFS. Handing control to init.js.");
                 core.loadJS('/system/init.js');
+                UI.remove(div);
             }
 
             (async () => {
@@ -122,7 +124,7 @@
                         const chunks = [];
                         const progressEl = UI.text(div, '');
                         progressEl.textContent = "Download progress: 0%";
-                        document.body.appendChild(progressEl);
+                        div.appendChild(progressEl);
 
                         while (true) {
                             const { done, value } = await reader.read();
@@ -135,7 +137,7 @@
                             }
                         }
                         const zipBlob = new Blob(chunks);
-                        await extractZipToOPFS(zipBlob);
+                        await extractZipToOPFS(zipBlob, div);
                     } catch (err) {
                         console.error('Error extracting desk.zip:', err);
                     }

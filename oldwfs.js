@@ -266,7 +266,7 @@ var fs2 = {
             const transaction = db.transaction(['main'], 'readwrite');
             const objectStore = transaction.objectStore('main');
             const request = objectStore.delete(path);
-            fs2.dwrite(path, false, false, false, true)
+            fs2.dwrite(path, false, false, false, true);
             request.onsuccess = function (event) {
                 resolve();
             };

@@ -20,13 +20,13 @@ export async function launch(UI, fs, core) {
     UI.text(setup, "Welcome to WebDesk!");
     const alrSetup = await set.read('setupdone');
     if (alrSetup === "true") {
-        const btn = UI.button(setup, "Exit", "ui-main-btn");
+        const btn = UI.button(setup, "Exit", "ui-big-btn");
         btn.addEventListener('click', () => {
             UI.remove(setupflexcontainer);
         });
     }
 
-    const btn = UI.button(setup, "Next", "ui-main-btn");
+    const btn = UI.button(setup, "Next", "ui-big-btn");
     btn.addEventListener('click', () => {
         migratePane();
     });
@@ -37,11 +37,11 @@ export async function launch(UI, fs, core) {
         const existing = await fs.read('/user/info/config.json');
         if (existing) {
             const status = UI.text(setup, "Copy data from old WebDesk to new WebDesk? This might take a while, files need to be converted.");
-            const skipBtn = UI.button(setup, "Skip", "ui-main-btn");
+            const skipBtn = UI.button(setup, "Skip", "ui-big-btn");
             skipBtn.addEventListener('click', () => {
                 aiSetupPane();
             });
-            const migrateBtn = UI.button(setup, "Migrate", "ui-main-btn");
+            const migrateBtn = UI.button(setup, "Migrate", "ui-big-btn");
             migrateBtn.addEventListener('click', async () => {
                 const oldfs = document.createElement('script');
                 oldfs.src = './oldfs.js';
@@ -98,7 +98,7 @@ export async function launch(UI, fs, core) {
         const switchBtn = UI.button(changeTxt2, "Login instead", "ui-small-btn");
         const username = UI.input(setup, "Username", "ui-main-input wide", "text");
         const password = UI.input(setup, "Password", "ui-main-input wide", "password");
-        const loginBtn = UI.button(setup, "Create account", "ui-main-btn");
+        const loginBtn = UI.button(setup, "Create account", "ui-big-btn");
 
         function switchToLogin() {
             changeTxt.innerText = "Sign into your WebDesk account ";
@@ -140,12 +140,12 @@ export async function launch(UI, fs, core) {
             const menu = UI.create('div', setup, 'cm');
             UI.text(menu, "You already have an account! Log in as " + username.value + "?");
 
-            const noBtn = UI.button(menu, "Close", "ui-main-btn");
+            const noBtn = UI.button(menu, "Close", "ui-big-btn");
             noBtn.addEventListener('click', () => {
                 UI.remove(menu);
             });
 
-            const yesBtn = UI.button(menu, "Log in", "ui-main-btn");
+            const yesBtn = UI.button(menu, "Log in", "ui-big-btn");
             yesBtn.addEventListener('click', () => {
                 sys.socket.emit("signin", { user: username.value, pass: password.value });
                 UI.remove(menu);
@@ -219,8 +219,8 @@ export async function launch(UI, fs, core) {
         }, 600);
         errorBar.right.innerText = "Error/Problem";
 
-        const doneBtn = UI.button(setup, "Got it", "ui-main-btn");
-        const deactivateAIBtn = UI.button(setup, "Deactivate AI features", "ui-main-btn");
+        const doneBtn = UI.button(setup, "Got it", "ui-big-btn");
+        const deactivateAIBtn = UI.button(setup, "Deactivate AI features", "ui-big-btn");
         doneBtn.addEventListener('click', () => {
             set.write('setupdone', 'true');
             window.location.reload();

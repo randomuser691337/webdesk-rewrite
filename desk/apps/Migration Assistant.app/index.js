@@ -49,13 +49,13 @@ export async function migratePane(UI, fs, core) {
     UI.text(setup, "Migration Assistant", 'big-text');
     const alrSetup = await set.read('setupdone');
     if (alrSetup === "true") {
-        const btn = UI.button(setup, "Exit", "ui-main-btn");
+        const btn = UI.button(setup, "Exit", "ui-big-btn");
         btn.addEventListener('click', () => {
             close();
         });
     }
 
-    const btn = UI.button(setup, "Next", "ui-main-btn");
+    const btn = UI.button(setup, "Next", "ui-big-btn");
     btn.addEventListener('click', () => {
         migratePane();
     });

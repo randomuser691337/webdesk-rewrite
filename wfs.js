@@ -103,6 +103,7 @@ const fs = {
             self.postMessage({ optype: "del", uID: uid, data: false });
         }
     },
+
     async erase(path, uid) {
         try {
             if (path.endsWith('/')) path = path.slice(0, -1);
@@ -131,6 +132,17 @@ const fs = {
             self.postMessage({ optype: "erase", uID: uid, data: false });
         }
     },
+
+    async mkdir(path, uid) {
+        try {
+            await walkPath(path, { create: true });
+            self.postMessage({ optype: "mkdir", uID: uid, data: true });
+        } catch (err) {
+            console.error("mkdir failed:", err);
+            self.postMessage({ optype: "mkdir", uID: uid, data: err });
+        }
+    }, 
+
     async ls(path, uid) {
         try {
             path = path || "/";
@@ -182,7 +194,8 @@ onmessage = (e) => {
     if (optype === "write") fs.write(data, uID, data2, filetype);
     if (optype === "erase") fs.erase(data, uID);
     if (optype === "ls") fs.ls(data, uID);
-    if (optype === "rm") fs.del(data, uID);
+    if (optype === "rm") fs.del(data, uID, data2);
+    if (optype === "mkdir") fs.mkdir(data, uID);
 };
 
 self.postMessage({ optype: "ready" });
