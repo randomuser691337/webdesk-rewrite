@@ -87,6 +87,7 @@
             bootloader.textContent = `
             import { unzipSync } from "https://cdn.jsdelivr.net/npm/fflate@0.7.4/esm/browser.js";
             async function extractZipToOPFS(zipFile, div) {
+                const txt = UI.text(div, 'Copying files...');
                 console.log('FORCE UPDATE ENABLED. TURN OFF BEFORE PRODUCTION');
                 const buffer = new Uint8Array(await zipFile.arrayBuffer());
                 const files = unzipSync(buffer);
@@ -106,6 +107,7 @@
                         content = new TextDecoder().decode(fileData);
                     }
                     // console.log(name, fileData);
+                    txt.textContent = 'Copying: ' + name;
                     await fs.write('/' + name, content, filetype);
                     // console.log(fileData);
                     if (name.startsWith('apps/') && name.endsWith('index.js')) {
@@ -116,7 +118,11 @@
                     }
                 }
 
+                txt.textContent = 'Setting up...';
+
                 await set.write('version', core.latestVersion);
+
+                txt.textContent = 'Starting WebDesk...';
 
                 console.log("ZIP extracted to OPFS. Handing control to init.js.");
                 core.loadJS('/system/init.js');
