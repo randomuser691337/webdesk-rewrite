@@ -1,5 +1,6 @@
 (async function () {
-    await core.loadJS('/system/ui.js');
+    try {
+        await core.loadJS('/system/ui.js');
     await core.loadCSS('/system/style.css');
     await core.loadJS('/system/core.js');
     await core.loadJS('/system/lib/socket.io.js');
@@ -72,6 +73,10 @@
             }
             mod.launch(UI, fs, core, undefined, mod);
         });
+    }
+    } catch (error) {
+        // dump on screen
+        document.body.innerHTML = `<div style="padding:20px;font-family:sans-serif;"><h1>Critical Error</h1><p>WebDesk encountered a critical error during startup. Error details: </p><pre style="background:#f0f0f0;padding:10px;border:1px solid #ccc;overflow:auto;max-height:400px;">${error.stack}</pre></div>`;
     }
 })();
 
