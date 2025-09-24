@@ -99,22 +99,33 @@
                     // Skip directories (either ends with '/' or is zero-length and has no extension)
                     if (name.endsWith('/') || name.endsWith('.DS_Store') || (fileData.length === 0 && !name.includes('.'))) continue;
 
-                    const filetype = name.match(/\.(png|jpg|jpeg|gif)$/i) ? "blob" : "text";
-                    let content;
-                    if (filetype === "blob") {
-                        content = fileData;
-                    } else {
-                        content = new TextDecoder().decode(fileData);
-                    }
-                    // console.log(name, fileData);
-                    txt.textContent = 'Copying: ' + name;
-                    await fs.write('/' + name, content, filetype);
-                    // console.log(fileData);
-                    if (name.startsWith('apps/') && name.endsWith('index.js')) {
-                        const parts = name.split('/');
-                        let lastdir = parts[parts.length - 2];
-                        lastdir = lastdir.replace('.app', '');
-                        await fs.write('/system/apps/Desktop.app/Items/' + lastdir, '/' + name, filetype);
+                    try {
+                        txt.textContent = 'Copying: ' + name;
+
+                        const filetype = name.match(/\.(png|jpg|jpeg|gif)$/i) ? "blob" : "text";
+                        let content;
+                        if (filetype === "blob") {
+                            content = fileData;
+                        } else {
+                            content = new TextDecoder().decode(fileData);
+                        }
+                        // console.log(name, fileData);
+                        await fs.write('/' + name, content, filetype);
+                        // console.log(fileData);
+                        if (name.startsWith('apps/') && name.endsWith('index.js')) {
+                            const parts = name.split('/');
+                            let lastdir = parts[parts.length - 2];
+                            lastdir = lastdir.replace('.app', '');
+                            await fs.write('/system/apps/Desktop.app/Items/' + lastdir, '/' + name, filetype);
+                        }
+                    } catch (error) {
+                        txt.textContent = 'Error copying: ' + name + ' - ' + error;
+                        const skip = UI.create('button', txt);
+                        skip.textContent = 'Skip';
+                        skip.addEventListener('click', () => {
+                            txt.textContent = 'Skipping: ' + name;
+                            continue;
+                        });
                     }
                 }
 
