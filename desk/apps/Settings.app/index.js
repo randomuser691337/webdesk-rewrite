@@ -4,20 +4,29 @@ var core2;
 var resizeObserver;
 export async function launch(UI, fs, core, unused, module) {
     core2 = core;
+    const check = await fs.read('/tmp/settings-open');
+    if (check) {
+        win = check;
+        win.win.click();
+        core2.removeModule(id);
+        return;
+    }
     win = UI.window(name, module);
+    fs.write('/tmp/settings-open', win);
     console.log(window.outerWidth);
     if (window.outerWidth < 470) {
         win.win.style.width = window.outerWidth / 1.08 + "px";
     } else {
-        win.win.style.width = "470px";
+        win.win.style.width = "540px";
     }
 
-    win.win.style.height = "450px";
+    win.win.style.height = "540px";
     win.headertxt.innerHTML = "";
     win.content.style.padding = "0px";
     win.content.style.display = "flex";
     let showSideBar;
     const sidebar = UI.create('div', win.content, 'window-split-sidebar');
+    sidebar.style.width = "175px";
     const sidebarWinBtnDiv = UI.create('div', sidebar);
     sidebar.appendChild(win.header);
     win.header.classList.add('window-header-clear');
@@ -29,8 +38,11 @@ export async function launch(UI, fs, core, unused, module) {
     const accountDiv = UI.create('div', sidebarcontent, 'box-group');
     accountDiv.style.marginTop = "6px";
     const userBar = UI.leftRightLayout(accountDiv);
-    userBar.left.innerHTML = `<span class="bold">User</span>`;
+    userBar.left.innerHTML = `<span class="bold">${UI.userName}</span>`;
     const manageBtn = UI.button(userBar.right, '⚙️', 'ui-small-btn');
+    manageBtn.addEventListener('click', () => {
+        userAcc();
+    });
 
     const generalButton = UI.button(sidebarcontent, 'General', 'ui-med-btn wide');
     generalButton.addEventListener('click', () => {
@@ -72,6 +84,18 @@ export async function launch(UI, fs, core, unused, module) {
         }
 
         return totalSize;
+    }
+
+    function userAcc() {
+        content.innerHTML = '';
+        title.innerText = "WebDesk Account - " + UI.userName;
+        const group1 = UI.create('div', content, 'box-group');
+        UI.text(group1, "Profile");
+        const changeUsername = UI.button(group1, 'Change Username', 'ui-med-btn');
+
+        const group2 = UI.create('div', content, 'box-group');
+        UI.text(group2, "Personal");
+        const changePw = UI.button(group2, 'Change Password', 'ui-med-btn');
     }
 
     function General() {
@@ -385,8 +409,9 @@ export async function launch(UI, fs, core, unused, module) {
 }
 
 export async function close() {
+    fs.rm('/tmp/settings-open');
     core2.removeModule(id);
+    resizeObserver.unobserve(win.win);
     UI.remove(win.win);
     win = undefined;
-    resizeObserver.unobserve(win.win);
 }

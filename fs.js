@@ -29,6 +29,7 @@
 */
 
 const worker = new Worker('./wfs.js');
+var tmp = new Map();
 
 function gen(min, max) {
     min = Math.ceil(min);
@@ -40,27 +41,67 @@ var currentops = []
 
 fs = {
     read: function (path) {
-        const uID = gen(0, 9999);
-        return new Promise((resolve, reject) => {
-            currentops.push({ uID, resolve, reject });
-            worker.postMessage({ optype: "read", uID, data: path });
-        });
+        if (path.startsWith("/tmp/")) {
+            const data = tmp.has(path) ? tmp.get(path) : null;
+            return Promise.resolve(data);
+        } else {
+            const uID = gen(0, 9999);
+            return new Promise((resolve, reject) => {
+                currentops.push({ uID, resolve, reject });
+                worker.postMessage({ optype: "read", uID, data: path });
+            });
+        }
     },
     write: function (path, data, filetype = "text") {
-        const uID = gen(0, 9999);
-        return new Promise((resolve, reject) => {
-            currentops.push({ uID, resolve, reject });
-            worker.postMessage({ optype: "write", uID, data: path, data2: data, filetype: filetype });
-        });
+        if (path.startsWith("/tmp/")) {
+            tmp.set(path, data);
+            return Promise.resolve(true);
+        } else {
+            const uID = gen(0, 9999);
+            return new Promise((resolve, reject) => {
+                currentops.push({ uID, resolve, reject });
+                worker.postMessage({ optype: "write", uID, data: path, data2: data, filetype: filetype });
+            });
+        }
     },
     ls: function (path) {
-        const uID = gen(0, 9999);
-        return new Promise((resolve, reject) => {
-            currentops.push({ uID, resolve, reject });
-            worker.postMessage({ optype: "ls", uID, data: path });
-        });
+        if (path === "/tmp" || path.startsWith("/tmp/")) {
+            const entriesMap = new Map();
+
+            for (const key of tmp.keys()) {
+                if (!key.startsWith(path + "/")) continue;
+                const relative = key.slice(path.length + 1);
+                const nextPart = relative.split("/")[0];
+
+                if (!entriesMap.has(nextPart)) {
+                    const isFile = !relative.includes("/") || relative.split("/").length === 1;
+                    entriesMap.set(nextPart, {
+                        name: nextPart,
+                        kind: isFile ? "file" : "directory",
+                        path: `${path}/${nextPart}`
+                    });
+                }
+            }
+
+            self.postMessage({
+                optype: "ls",
+                uID: uid,
+                data: Array.from(entriesMap.values())
+            });
+            return;
+        } else {
+            const uID = gen(0, 9999);
+            return new Promise((resolve, reject) => {
+                currentops.push({ uID, resolve, reject });
+                worker.postMessage({ optype: "ls", uID, data: path });
+            });
+        }
     },
     rm: function (path, recursive = false) {
+        if (path.startsWith("/tmp/")) {
+            tmp.delete(path);
+            return Promise.resolve(true);
+        }
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });
@@ -68,6 +109,9 @@ fs = {
         });
     },
     mkdir: function (path) {
+        if (path.startsWith("/tmp/")) {
+            return Promise.resolve(true);
+        }
         const uID = gen(0, 9999);
         return new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });

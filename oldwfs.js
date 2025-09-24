@@ -1,7 +1,6 @@
 let db;
-const request = indexedDB.open("WebDeskDB", 2);
+const request = indexedDB.open("WebDeskDB2", 2);
 const pin = undefined;
-var tmp = new Map();
 let lastAction = "Initializing";
 
 function logTimeout(action) {

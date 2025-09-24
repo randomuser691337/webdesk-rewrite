@@ -33,23 +33,27 @@ export async function launch(UI, fs, core) {
 
     async function migratePane() {
         setup.innerHTML = '';
-        UI.text(setup, "Welcome to WebDesk!");
-        const existing = await fs.read('/user/info/config.json');
-        if (existing) {
-            const status = UI.text(setup, "Copy data from old WebDesk to new WebDesk? This might take a while, files need to be converted.");
-            const skipBtn = UI.button(setup, "Skip", "ui-big-btn");
-            skipBtn.addEventListener('click', () => {
-                aiSetupPane();
-            });
-            const migrateBtn = UI.button(setup, "Migrate", "ui-big-btn");
-            migrateBtn.addEventListener('click', async () => {
-                const oldfs = document.createElement('script');
-                oldfs.src = './oldfs.js';
-                document.body.appendChild(oldfs);
-                oldfs.onload = async () => {
-                    setTimeout(async () => {
+        UI.text(setup, "Examining WebDesk...");
+        const oldfs = document.createElement('script');
+        oldfs.src = './migratefs.js';
+        document.body.appendChild(oldfs);
+
+        oldfs.onload = async () => {
+            setTimeout(async () => {
+                const existing = await fs3.read('/user/info/config.json');
+                const existing2 = await fs3.read('/system/webdesk');
+                setup.innerHTML = '';
+                if (existing && existing2) {
+                    UI.text(setup, "Welcome back!");
+                    const status = UI.text(setup, "Copy data from old WebDesk to new WebDesk? This might take a while, files need to be converted.");
+                    const skipBtn = UI.button(setup, "Skip", "ui-big-btn");
+                    skipBtn.addEventListener('click', () => {
+                        logIn();
+                    });
+                    const migrateBtn = UI.button(setup, "Migrate", "ui-big-btn");
+                    migrateBtn.addEventListener('click', async () => {
                         status.innerText = "Getting file paths...";
-                        const all = await fs2.getall();
+                        const all = await fs3.getall();
                         let counter = 0;
                         all.forEach(async (file) => {
                             counter++;
@@ -58,7 +62,7 @@ export async function launch(UI, fs, core) {
                                 return;
                             } else {
                                 console.log(file);
-                                const data = await fs2.read(file);
+                                const data = await fs3.read(file);
                                 if (data.startsWith('data:')) {
                                     const base64Data = data.split(',')[1];
                                     const byteCharacters = atob(base64Data);
@@ -75,18 +79,37 @@ export async function launch(UI, fs, core) {
                             }
                         });
 
-                        const checkForToken = await fs.read('/user/info/token');
-                        if (checkForToken) {
-                           llmStatus();
-                        } else {
-                            logIn();
+                        async function checkIfToken() {
+                            const checkForToken = await fs.read('/user/info/token');
+                            if (checkForToken) {
+                                llmStatus();
+                            } else {
+                                logIn();
+                            }
                         }
-                    }, 1000);
-                }
-            });
-        } else {
 
-        }
+                        const whatnow = UI.create('div', setup, 'cm');
+                        UI.text(whatnow, "Migration complete!", 'bold');
+                        UI.text(whatnow, "Decide what to do with your old data.");
+                        UI.text(whatnow, "Delete: Erases old WebDesk and it's data. User files have moved here, so they're safe.");
+                        UI.text(whatnow, "Leave alone: Saves old WebDesk so you can boot into it later. Uses more space.");
+                        const delBtn = UI.button(whatnow, "Delete", "ui-big-btn");
+                        delBtn.addEventListener('click', async () => {
+                            await fs3.erase();
+                            checkIfToken();
+                            UI.snack('Erased old WebDesk.');
+                        });
+
+                        const leaveBtn = UI.button(whatnow, "Leave alone", "ui-big-btn");
+                        leaveBtn.addEventListener('click', async () => {
+                            checkIfToken();
+                        });
+                    });
+                } else {
+                    logIn();
+                }
+            }, 1000);
+        };
     }
 
     async function logIn() {
@@ -236,6 +259,7 @@ export async function launch(UI, fs, core) {
         }
 
         function reactivateAI() {
+            set.write('setupdone', 'true');
             set.del('chloe');
             UI.snack('AI features reactivated. You can deactivate them in Settings > Manage AI.');
             deactivateAIBtn.Filler.innerText = "Deactivate AI features";

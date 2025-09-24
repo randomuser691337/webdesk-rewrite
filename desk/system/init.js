@@ -1,7 +1,8 @@
-core.loadCSS('/system/style.css');
-core.loadJS('/system/core.js');
-core.loadJS('/system/lib/socket.io.js');
 (async function () {
+    await core.loadJS('/system/ui.js');
+    await core.loadCSS('/system/style.css');
+    await core.loadJS('/system/core.js');
+    await core.loadJS('/system/lib/socket.io.js');
     const checkSockets = await startsockets();
     if (await set.read('setupdone') !== "true") {
         if (checkSockets === true) {
