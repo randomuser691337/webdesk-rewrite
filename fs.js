@@ -25,7 +25,7 @@
 
     fs.read("/notes/hello.txt").then(console.log);
     fs.write("/wallpapers/bg.png", blob, "blob");
-    fs.del("/old/meme.txt").then(() => console.log("Deleted."));
+    fs.del("/notes/hello.txt").then(() => console.log("Deleted."));
 */
 
 const worker = new Worker('./wfs.js');
@@ -118,12 +118,18 @@ fs = {
             worker.postMessage({ optype: "mkdir", uID, data: path });
         });
     },
-    erase: function (path) {
+    erase: async function () {
         const uID = gen(0, 9999);
-        return new Promise((resolve, reject) => {
+        const check = await new Promise((resolve, reject) => {
             currentops.push({ uID, resolve, reject });
-            worker.postMessage({ optype: "erase", uID, data: path });
+            worker.postMessage({ optype: "erase", uID });
         });
+
+        console.log(check);
+
+        if (check === true) {
+            window.location.reload();
+        }
     }
 };
 

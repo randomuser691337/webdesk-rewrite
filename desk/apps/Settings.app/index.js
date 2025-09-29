@@ -7,7 +7,7 @@ export async function launch(UI, fs, core, unused, module) {
     const check = await fs.read('/tmp/settings-open');
     if (check) {
         win = check;
-        win.win.click();
+        win.focusWindow();
         core2.removeModule(id);
         return;
     }
@@ -86,6 +86,19 @@ export async function launch(UI, fs, core, unused, module) {
         return totalSize;
     }
 
+    function eraseWarn() {
+        const bg = UI.create('div', document.body, 'blur-bg');
+        const menu = UI.create('div', bg, 'cm');
+        menu.style.width = "250px";
+        UI.text(menu, `Are you sure you want to erase all data? This can't be undone.`, 'bold');
+        UI.text(menu, `Your WebDesk account won't be affected.`);
+        const erase = UI.button(menu, 'Erase WebDesk', 'ui-med-btn wide');
+        const close = UI.button(menu, 'Cancel', 'ui-med-btn wide');
+        close.addEventListener('click', function () {
+            UI.remove(bg);
+        });
+    }
+
     function userAcc() {
         content.innerHTML = '';
         title.innerText = "WebDesk Account - " + UI.userName;
@@ -96,6 +109,7 @@ export async function launch(UI, fs, core, unused, module) {
         const group2 = UI.create('div', content, 'box-group');
         UI.text(group2, "Personal");
         const changePw = UI.button(group2, 'Change Password', 'ui-med-btn');
+        const requestLogOutAll = UI.button(group2, 'Log out all other WebDesks', 'ui-med-btn');
     }
 
     function General() {
@@ -103,6 +117,9 @@ export async function launch(UI, fs, core, unused, module) {
         title.innerText = "General";
         const group1 = UI.create('div', content, 'box-group');
         const eraseBtn = UI.button(group1, 'Erase WebDesk', 'ui-med-btn wide');
+        eraseBtn.addEventListener('click', function () {
+            eraseWarn();
+        });
         const appearbar = UI.leftRightLayout(group1);
         appearbar.left.innerHTML = '<span class="smalltxt">Low-end device mode</span>';
         const enableBtn = UI.button(appearbar.right, 'Enable', 'ui-med-btn wide');

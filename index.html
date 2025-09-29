@@ -99,6 +99,10 @@
                     // Skip directories (either ends with '/' or is zero-length and has no extension)
                     if (name.endsWith('/') || name.endsWith('.DS_Store') || (fileData.length === 0 && !name.includes('.'))) continue;
 
+                    function skip() {
+                        return;
+                    }
+
                     try {
                         txt.textContent = 'Copying: ' + name;
 
@@ -124,7 +128,7 @@
                         skip.textContent = 'Skip';
                         skip.addEventListener('click', () => {
                             txt.textContent = 'Skipping: ' + name;
-                            continue;
+                            skip();
                         });
                     }
                 }
@@ -144,7 +148,7 @@
                 async function update() {
                     try {
                         const div = UI.create('div', document.body);
-                        UI.text(div, 'WebDesk 0.3.3 // red40lover420');
+                        UI.text(div, 'WebDesk 0.3.3 // dbh_ra9');
                         const response = await fetch('desk.zip', { cache: 'no-store' });
                         if (!response.ok) {
                             throw new Error('<!> Failed to fetch zip: ' + response.statusText);
@@ -178,7 +182,15 @@
                         console.error('Error extracting desk.zip:', err);
                     }
                 }
-                const FORCEUPDATE = false;
+                
+                // FORCEUPDATE FLAG
+                // FORCEUPDATE FLAG
+
+                const FORCEUPDATE = true;
+
+                // FORCEUPDATE FLAG
+                // FORCEUPDATE FLAG
+
                 if (FORCEUPDATE === false) {
                     console.log('<i> FORCEUPDATE flag false, checking for updates');
                     const currentRes = await set.read('version');

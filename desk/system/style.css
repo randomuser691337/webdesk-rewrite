@@ -17,7 +17,7 @@
     --round-main: 15px;
     --round-secondary: 12px;
     --round-small: 9px;
-    --big-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    --big-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
     --small-shadow: 1px 0 8px rgba(0, 0, 0, 0.12);
 }
 
@@ -508,6 +508,15 @@ input,
     font-weight: 600;
 }
 
+.blur-bg {
+    position: fixed;
+    left: 0px; top: 0px; bottom: 0px; right: 0px;
+    z-index: 999999999999999999999999999999999999999999999999999999999999999999;
+    background-color: rgba(var(--ui-primary), 0.1);
+    -webkit-backdrop-filter: blur(var(--main-ui-blur));
+    backdrop-filter: blur(var(--main-ui-blur));
+}
+
 .setup-flex-container {
     position: fixed;
     display: flex;
@@ -539,7 +548,7 @@ input,
 .right-click-menu {
     position: fixed;
     background-color: rgba(var(--ui-primary), 0.8);
-    padding: 5px;
+    padding: 6px;
     border: 1px solid rgba(var(--ui-tertiary));
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
@@ -618,8 +627,9 @@ input,
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    width: 320px;
+    width: 250px;
     z-index: 9998;
+    text-align: center;
 }
 
 .llm-prog {
@@ -680,16 +690,20 @@ input,
     box-sizing: border-box;
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
-    position: relative; /* Add this to allow absolute positioning of child */
-    overflow: visible;  /* Allow child to overflow */
+    position: relative;
+    /* Add this to allow absolute positioning of child */
+    overflow: visible;
+    /* Allow child to overflow */
 }
 
 .wd-notif-close-button {
-    position: absolute; /* Change to absolute for positioning inside .wd-notif */
-    left: -12px; 
+    position: absolute;
+    /* Change to absolute for positioning inside .wd-notif */
+    left: -12px;
     top: -12px;
     border-radius: 50%;
-    width: 24px; height: 24px;
+    width: 24px;
+    height: 24px;
     background-color: rgba(var(--ui-primary), 0.8);
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
@@ -698,7 +712,8 @@ input,
     border: 1px solid rgba(var(--ui-secondary), 0.9);
     color: var(--text);
     font-weight: 600;
-    z-index: 1; /* Ensure it's above content */
+    z-index: 1;
+    /* Ensure it's above content */
 }
 
 .wd-notif-close-button:active {
@@ -717,24 +732,24 @@ input,
 }
 
 .wd-notif-img {
-	width: 32px;
+    width: 32px;
     height: 32px;
     border-radius: var(--round-small);
 }
 
 .wd-notif-contents {
-	margin-left: 8px;
+    margin-left: 8px;
     flex: 1;
-  	min-width: 0;
+    min-width: 0;
 }
 
 p {
-	margin: 0px;
+    margin: 0px;
     padding: 0px;
 }
 
 .wd-notif-title {
-	display: flex;
+    display: flex;
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;

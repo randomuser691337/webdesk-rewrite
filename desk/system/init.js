@@ -1,79 +1,86 @@
 (async function () {
     try {
         await core.loadJS('/system/ui.js');
-    await core.loadCSS('/system/style.css');
-    await core.loadJS('/system/core.js');
-    await core.loadJS('/system/lib/socket.io.js');
-    const checkSockets = await startsockets();
-    if (await set.read('setupdone') !== "true") {
-        if (checkSockets === true) {
-            const setup = await core.loadModule(await fs.read('/system/apps/Setup.app/index.js'));
-            await setup.launch(UI, fs, core);
-        } else {
-            const setupflexcontainer = UI.create('div', document.body, 'setup-flex-container');
-            const setup = UI.create('div', setupflexcontainer, 'setup-window');
-            UI.text(setup, "Welcome to WebDesk!");
-            UI.text(setup, "WebDesk's server is down, so setup can't continue. Continue as guest?");
-            const btn = UI.button(setup, "Reboot", "ui-big-btn");
-            btn.addEventListener('click', () => {
-                window.location.reload();
-            });
-
-            const guestBtn = UI.button(setup, "Guest", "ui-big-btn");
-            guestBtn.addEventListener('click', async () => {
-                await set.write('setupdone', 'true');
-                await set.write('guest', 'true');
-                UI.remove(setupflexcontainer);
-                const desktop = await fs.read('/system/apps/Desktop.app/index.js');
-                core.loadModule(desktop).then(async (mod) => {
-                    if (('gpu' in navigator)) {
-                        if (await set.read('chloe') !== "deactivated") {
-                            wd.startLLM();
-                        }
-                    } else {
-                        sys.LLMLoaded = "unsupported";
-                    }
-                    mod.launch(UI, fs, core, undefined, mod);
+        await core.loadCSS('/system/style.css');
+        await core.loadJS('/system/core.js');
+        await core.loadJS('/system/lib/socket.io.js');
+        const checkSockets = await startsockets();
+        if (await set.read('setupdone') !== "true") {
+            if (checkSockets === true) {
+                const setup = await core.loadModule(await fs.read('/system/apps/Setup.app/index.js'));
+                await setup.launch(UI, fs, core);
+            } else {
+                const blob = await fs.read('/system/lib/wallpaper.jpg');
+                if (blob instanceof Blob) {
+                    const imageUrl = URL.createObjectURL(blob);
+                    document.body.style.backgroundImage = `url('${imageUrl}')`;
+                } else {
+                    console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
+                }
+                const setupflexcontainer = UI.create('div', document.body, 'setup-flex-container');
+                const setup = UI.create('div', setupflexcontainer, 'setup-window');
+                UI.text(setup, "Welcome to WebDesk!");
+                UI.text(setup, "WebDesk's server is down, so setup can't continue. Continue as guest?");
+                const btn = UI.button(setup, "Reboot", "ui-big-btn");
+                btn.addEventListener('click', () => {
+                    window.location.reload();
                 });
-            });
-        }
-        const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
-        if (prefersDarkScheme.matches) {
-            UI.System.darkMode();
-            set.write('appearance', 'auto');
-        } else {
-            UI.System.lightMode();
-            set.write('appearance', 'auto');
-        }
-    } else {
-        const acc = await set.read('accent');
-        const LLMName = await set.read('LLMName');
-        const appear = await set.read('appearance');
-        if (LLMName) UI.LLMName = LLMName;
-        if (acc) UI.changevar('ui-accent', acc);
-        if (appear === "dark") {
-            UI.System.darkMode();
-        } else if (appear === "auto") {
+
+                const guestBtn = UI.button(setup, "Guest", "ui-big-btn");
+                guestBtn.addEventListener('click', async () => {
+                    await set.write('setupdone', 'true');
+                    await set.write('guest', 'true');
+                    UI.remove(setupflexcontainer);
+                    const desktop = await fs.read('/system/apps/Desktop.app/index.js');
+                    core.loadModule(desktop).then(async (mod) => {
+                        if (('gpu' in navigator)) {
+                            if (await set.read('chloe') !== "deactivated") {
+                                wd.startLLM();
+                            }
+                        } else {
+                            sys.LLMLoaded = "unsupported";
+                        }
+                        mod.launch(UI, fs, core, undefined, mod);
+                    });
+                });
+            }
             const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
             if (prefersDarkScheme.matches) {
                 UI.System.darkMode();
+                set.write('appearance', 'auto');
             } else {
                 UI.System.lightMode();
+                set.write('appearance', 'auto');
             }
-        }
-        if (await set.read('lowend') === "true") UI.System.lowgfxMode(true);
-        const desktop = await fs.read('/system/apps/Desktop.app/index.js');
-        core.loadModule(desktop).then(async (mod) => {
-            if (('gpu' in navigator)) {
-                if (await set.read('chloe') !== "deactivated") {
-                    wd.startLLM();
+        } else {
+            const acc = await set.read('accent');
+            const LLMName = await set.read('LLMName');
+            const appear = await set.read('appearance');
+            if (LLMName) UI.LLMName = LLMName;
+            if (acc) UI.changevar('ui-accent', acc);
+            if (appear === "dark") {
+                UI.System.darkMode();
+            } else if (appear === "auto") {
+                const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+                if (prefersDarkScheme.matches) {
+                    UI.System.darkMode();
+                } else {
+                    UI.System.lightMode();
                 }
-            } else {
-                sys.LLMLoaded = "unsupported";
             }
-            mod.launch(UI, fs, core, undefined, mod);
-        });
-    }
+            if (await set.read('lowend') === "true") UI.System.lowgfxMode(true);
+            const desktop = await fs.read('/system/apps/Desktop.app/index.js');
+            core.loadModule(desktop).then(async (mod) => {
+                if (('gpu' in navigator)) {
+                    if (await set.read('chloe') !== "deactivated") {
+                        wd.startLLM();
+                    }
+                } else {
+                    sys.LLMLoaded = "unsupported";
+                }
+                mod.launch(UI, fs, core, undefined, mod);
+            });
+        }
     } catch (error) {
         // dump on screen
         document.body.innerHTML = `<div style="padding:20px;font-family:sans-serif;"><h1>Critical Error</h1><p>WebDesk encountered a critical error during startup. Error details: </p><pre style="background:#f0f0f0;padding:10px;border:1px solid #ccc;overflow:auto;max-height:400px;">${error.stack}</pre></div>`;
