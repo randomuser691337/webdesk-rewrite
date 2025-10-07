@@ -66,7 +66,7 @@ var fs2 = {
         }
         return this.askwfs('write', path, data, filetype);
     },
-    del(path) {
+    rm(path) {
         return this.askwfs('delete', path);
     },
     async erase(path) {

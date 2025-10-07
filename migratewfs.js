@@ -7,6 +7,7 @@ function logTimeout(action) {
     lastAction = action;
     setTimeout(() => {
         console.warn(`<i> Operation "${lastAction}" is taking longer than expected.`);
+        self.postMessage({ type: 'reboot', data: null });
     }, 4000);
 }
 

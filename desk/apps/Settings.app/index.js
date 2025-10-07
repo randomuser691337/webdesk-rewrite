@@ -112,35 +112,40 @@ export async function launch(UI, fs, core, unused, module) {
         const requestLogOutAll = UI.button(group2, 'Log out all other WebDesks', 'ui-med-btn');
     }
 
-    function General() {
+    async function General() {
         content.innerHTML = '';
         title.innerText = "General";
-        const group1 = UI.create('div', content, 'box-group');
-        const eraseBtn = UI.button(group1, 'Erase WebDesk', 'ui-med-btn wide');
+        const group0 = UI.create('div', content, 'box-group');
+        const group0bar = UI.leftRightLayout(group0);
+        group0bar.left.innerHTML = '<span class="smalltxt">Danger Zone</span>';
+        const eraseBtn = UI.button(group0bar.right, 'Erase...', 'ui-med-btn');
         eraseBtn.addEventListener('click', function () {
             eraseWarn();
         });
+        const group1 = UI.create('div', content, 'box-group');
         const appearbar = UI.leftRightLayout(group1);
         appearbar.left.innerHTML = '<span class="smalltxt">Low-end device mode</span>';
-        const enableBtn = UI.button(appearbar.right, 'Enable', 'ui-med-btn wide');
+        const enableBtn = UI.switch.create(appearbar.right, false);
+        if (await set.read('lowend') === 'true') {
+            UI.switch.check(enableBtn);
+        }
+
+        let lowEndMenu;
+
         enableBtn.addEventListener('click', () => {
-            set.write('lowend', 'true');
-            const menu = UI.create('div', document.body, 'cm');
-            UI.text(menu, 'Restart WebDesk to enable low-end device mode');
-            const btn = UI.button(menu, 'Restart', 'ui-med-btn');
+            UI.remove(lowEndMenu);
+            lowEndMenu = UI.create('div', document.body, 'cm');
+            if (UI.switch.checked(enableBtn) === false) {
+                set.del('lowend');
+                UI.text(lowEndMenu, 'Restart WebDesk to disable low-end device mode');
+            } else {
+                set.write('lowend', 'true');
+                UI.text(lowEndMenu, 'Restart WebDesk to enable low-end device mode');
+            }
+            const btn = UI.button(lowEndMenu, 'Restart', 'ui-med-btn');
             btn.addEventListener('click', function () { window.location.reload(); });
-            const btn2 = UI.button(menu, `I'll do it later`, 'ui-med-btn');
-            btn2.addEventListener('click', function () { UI.remove(menu); });
-        });
-        const disableBtn = UI.button(appearbar.right, 'Disable', 'ui-med-btn wide');
-        disableBtn.addEventListener('click', () => {
-            set.del('lowend');
-            const menu = UI.create('div', document.body, 'cm');
-            UI.text(menu, 'Restart WebDesk to disable low-end device mode');
-            const btn = UI.button(menu, 'Restart', 'ui-med-btn');
-            btn.addEventListener('click', function () { window.location.reload(); });
-            const btn2 = UI.button(menu, `I'll do it later`, 'ui-med-btn');
-            btn2.addEventListener('click', function () { UI.remove(menu); });
+            const btn2 = UI.button(lowEndMenu, `I'll do it later`, 'ui-med-btn');
+            btn2.addEventListener('click', function () { UI.remove(lowEndMenu); });
         });
     }
 
@@ -148,6 +153,25 @@ export async function launch(UI, fs, core, unused, module) {
         content.innerHTML = '';
         title.innerText = "Manage AI";
         if (('gpu' in navigator)) {
+            const gpuTest = await UI.System.GPUTest();
+            const compatDiv = UI.create('div', content, 'message-box-group');
+            if (gpuTest.perfScore < 0.00004) {
+                compatDiv.classList.add('good');
+                UI.text(compatDiv, `Compatibility`, 'bold');
+                UI.text(compatDiv, `You can run anything in the list.`);
+            } else if (gpuTest.perfScore < 0.00028) {
+                compatDiv.classList.add('good');
+                UI.text(compatDiv, `Compatibility`, 'bold');
+                UI.text(compatDiv, `Your device can run big LLMs well.`);
+            } else if (gpuTest.perfScore < 0.03) {
+                compatDiv.classList.add('okay');
+                UI.text(compatDiv, `Compatibility`, 'bold');
+                UI.text(compatDiv, `Your device can run the default or mid-sized LLMs fine.`);
+            } else {
+                compatDiv.classList.add('bad');
+                UI.text(compatDiv, `Compatibility`, 'bold');
+                UI.text(compatDiv, `Your device can't run LLMs. You should disable AI features.`);
+            }
             const group1 = UI.create('div', content, 'box-group');
             const appearbar = UI.leftRightLayout(group1);
             appearbar.left.innerHTML = '<span class="smalltxt">AI features</span>';
@@ -215,14 +239,15 @@ export async function launch(UI, fs, core, unused, module) {
             const dropBtn = UI.button(appearbar2.right, UI.truncate(modeln, 25), 'ui-med-btn wide');
             dropBtn.dropBtnDecor();
 
+            let menu;
             dropBtn.addEventListener('click', async function () {
                 const rect = dropBtn.getBoundingClientRect();
                 const event = {
                     clientX: Math.floor(rect.left),
                     clientY: Math.floor(rect.bottom)
                 };
-
-                const menu = UI.rightClickMenu(event);
+                UI.remove(menu);
+                menu = UI.rightClickMenu(event);
                 menu.style.width = `${Math.floor(rect.width) - 10}px`;
                 if (sys.LLMLoaded === false) {
                     UI.text(menu, 'Enable AI features to choose LLMs.', 'smalltxt');

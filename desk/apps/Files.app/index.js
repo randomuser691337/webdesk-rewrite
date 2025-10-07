@@ -124,9 +124,12 @@ export async function launch(UI, fs, core, unused, module) {
                 await openfile();
             });
 
+            let contextMenu;
+
             button.addEventListener('contextmenu', function (event) {
                 event.preventDefault();
-                const contextMenu = UI.rightClickMenu(event);
+                UI.remove(contextMenu);
+                contextMenu = UI.rightClickMenu(event);
 
                 const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn wide');
                 openButton.onclick = async () => {
@@ -145,6 +148,29 @@ export async function launch(UI, fs, core, unused, module) {
                     UI.text(div, `Delete ${file.name}?`, 'bold');
                     UI.text(div, 'Deleted files cannot be recovered.');
                     const yesBtn = UI.button(div, 'Delete', 'ui-small-btn');
+                    yesBtn.onclick = async () => {
+                        UI.remove(div);
+                        if (file.kind === "directory") {
+                            await fs.rm(file.path, true);
+                        } else {
+                            await fs.rm(file.path);
+                        }
+                        nav(currentPath);
+                    };
+
+                    const noBtn = UI.button(div, 'Cancel', 'ui-small-btn');
+                    noBtn.onclick = () => {
+                        UI.remove(div);
+                    };
+                };
+
+                const renameButton = UI.button(contextMenu, 'Rename', 'ui-small-btn wide');
+                renameButton.onclick = async () => {
+                    contextMenu.remove();
+                    const div = UI.create('div', document.body, 'cm');
+                    UI.text(div, `Delete ${file.name}?`, 'bold');
+                    UI.text(div, 'Deleted files cannot be recovered.');
+                    const yesBtn = UI.button(div, 'Rename', 'ui-small-btn');
                     yesBtn.onclick = async () => {
                         UI.remove(div);
                         if (file.kind === "directory") {

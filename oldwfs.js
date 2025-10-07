@@ -1,5 +1,6 @@
 let db;
 const request = indexedDB.open("WebDeskDB2", 2);
+var tmp = new Map();
 const pin = undefined;
 let lastAction = "Initializing";
 

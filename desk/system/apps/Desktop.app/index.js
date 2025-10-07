@@ -1,20 +1,31 @@
 export var name = "Desktop"
 var taskbar;
+var menubar;
 var imageUrl;
 var core2;
 export async function launch(UI, fs, core) {
     core2 = core;
-    taskbar = UI.create('div', document.body, 'taskbar');
+    UI.System.SystemMenus.menubar = UI.create('div', document.body, 'menuBar');
+    UI.System.SystemMenus.taskbarContainer = UI.create('div', document.body, 'taskbar-container');
+    UI.System.SystemMenus.taskbar = UI.create('div', UI.System.SystemMenus.taskbarContainer, 'taskbar');
+    menubar = UI.System.SystemMenus.menubar;
+    taskbar = UI.System.SystemMenus.taskbar;
+    const leftMenuBar = UI.create('div', menubar, 'window-header-nav');
+    const rightMenuBar = UI.create('div', menubar, 'window-header-text');
     const left = UI.create('div', taskbar, 'window-header-nav');
-    const right = UI.create('div', taskbar, 'window-header-text');
     const appBTN = UI.button(left, 'Apps', 'ui-big-btn');
     const llmBTN = UI.button(left, '', 'ring-btn');
     const contLLM = UI.create('div', llmBTN, 'waiting');
     const ring = UI.create('div', contLLM, 'ring');
-    const contBTN = UI.button(right, 'Controls', 'ui-big-btn');
+    const contBTN = UI.button(rightMenuBar, 'Controls', 'ui-menubar-btn');
     if (sys.LLMLoaded === "unsupported") {
         llmBTN.style.display = "none";
     }
+
+    leftMenuBar.style.height = "16px";
+    rightMenuBar.style.height = "16px";
+    const webdeskButton = UI.create('button', leftMenuBar, 'webdesk-button');
+    UI.System.SystemMenus.MenuBarActions = UI.create('div', leftMenuBar);
 
     let currentMenu = {
         element: null,
@@ -45,9 +56,11 @@ export async function launch(UI, fs, core) {
         closeCurrentMenu();
 
         const menu = UI.create('div', document.body, 'taskbar-menu');
+        menu.style.width = "240px";
         const taskrect = taskbar.getBoundingClientRect();
-        menu.style.left = taskrect.left + "px";
-        menu.style.bottom = taskrect.height + taskrect.left + taskrect.left + "px";
+        // Centering line corrected by AI
+        menu.style.left = (taskrect.left + (taskrect.width / 2)) - (menu.offsetWidth / 2) + "px";
+        menu.style.bottom = taskrect.height + 4 + "px";
         const name = await set.read('name');
         if (name !== null) {
             UI.text(menu, name);
@@ -121,7 +134,7 @@ export async function launch(UI, fs, core) {
             });
 
             messages.push({
-                role: "user",
+                role: "system",
                 content: `Focused window info:\nTitle: ${UI.focusedWindow.title}\nContent:\n${UI.focusedWindow.content.outerHTML}`
             });
         } catch (error) {
@@ -132,8 +145,8 @@ export async function launch(UI, fs, core) {
             });
 
             messages.push({
-                role: "user",
-                content: `No windows accessible.`
+                content: `No windows accessible.`,
+                role: "system"
             });
         }
 
@@ -145,8 +158,8 @@ export async function launch(UI, fs, core) {
         messagebox.style.overflow = "auto";
 
         const taskrect = taskbar.getBoundingClientRect();
-        menu.style.left = taskrect.left + "px";
-        menu.style.bottom = taskrect.height + taskrect.left + taskrect.left + "px";
+        menu.style.left = (taskrect.left + (taskrect.width / 2)) - (menu.offsetWidth / 2) + "px";
+        menu.style.bottom = taskrect.height + 4 + "px";
 
         currentMenu.element = menu;
         currentMenu.type = "llm";
@@ -247,9 +260,9 @@ export async function launch(UI, fs, core) {
             core.loadJS('/system/init.js');
         });
 
-        const taskrect = taskbar.getBoundingClientRect();
-        menu.style.right = taskrect.left + "px";
-        menu.style.bottom = taskrect.height + taskrect.left + taskrect.left + "px";
+        const taskrect = menubar.getBoundingClientRect();
+        menu.style.right = "4px";
+        menu.style.top = taskrect.height + "px";
 
         currentMenu.element = menu;
         currentMenu.type = "controls";
@@ -280,15 +293,13 @@ export async function launch(UI, fs, core) {
         }
     });
 
-    if (await set.read('lowend') !== "true") {
-        const blob = await fs.read('/system/lib/wallpaper.jpg');
-        if (blob instanceof Blob) {
-            imageUrl = URL.createObjectURL(blob);
-            document.body.style.backgroundImage = `url('${imageUrl}')`;
-        } else {
-            console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
-            UI.System.generateBlobWallpaper();
-        }
+    const blob = await fs.read('/system/lib/wallpaper.jpg');
+    if (blob instanceof Blob) {
+        imageUrl = URL.createObjectURL(blob);
+        document.body.style.backgroundImage = `url('${imageUrl}')`;
+    } else {
+        console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
+        UI.System.generateBlobWallpaper();
     }
 
     return ring;
@@ -297,7 +308,10 @@ export async function launch(UI, fs, core) {
 export async function close() {
     if (taskbar) {
         core2.removeModule(id);
-        UI.remove(taskbar);
+        UI.remove(UI.System.SystemMenus.menubar);
+        UI.remove(UI.System.SystemMenus.taskbarContainer);
+        taskbar = undefined;
+        menubar = undefined;
         document.body.style.backgroundImage = "unset";
         if (imageUrl) {
             URL.revokeObjectURL(imageUrl);

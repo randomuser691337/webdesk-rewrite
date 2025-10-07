@@ -1,19 +1,19 @@
-var wfs = new Worker('/migratewfs.js');
-var fsloaded = false;
-const pendingRequests = {};
-let requestIdCounter = 0;
+var wfs3 = new Worker('/migratewfs.js');
+var fsloaded3 = false;
+const pendingRequests3 = {};
+let requestIdCounter3 = 0;
 
-wfs.onmessage = function (event) {
+wfs3.onmessage = function (event) {
     const { type, data, requestId } = event.data;
 
-    if (requestId in pendingRequests) {
-        const { resolve, reject } = pendingRequests[requestId];
+    if (requestId in pendingRequests3) {
+        const { resolve, reject } = pendingRequests3[requestId];
         type === 'result' ? resolve(data) : reject(data);
-        delete pendingRequests[requestId];
+        delete pendingRequests3[requestId];
     } else {
-        switch (type) {
+        switch (type) { 
             case 'db_ready':
-                fsloaded = true;
+                fsloaded3 = true;
                 console.log(`<i> Migration WFS loaded`);
                 break;
             case 'reboot':
@@ -34,12 +34,12 @@ wfs.onmessage = function (event) {
 
 var fs3 = {
     send(message, transferList) {
-        wfs.postMessage(message, transferList);
+        wfs3.postMessage(message, transferList);
     },
     askwfs(operation, params, opt, filetype) {
-        const requestId = requestIdCounter++;
+        const requestId = requestIdCounter3++;
         return new Promise((resolve, reject) => {
-            pendingRequests[requestId] = { resolve, reject };
+            pendingRequests3[requestId] = { resolve, reject };
             if (typeof params === 'string' && params.length > 0 && !params.startsWith('/')) {
                 params = "/" + params;
             }

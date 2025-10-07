@@ -2,8 +2,8 @@
 
 :root {
     --ui-primary: 255, 255, 255;
-    --ui-secondary: 245, 245, 245;
-    --ui-tertiary: 235, 235, 235;
+    --ui-secondary: 240, 240, 240;
+    --ui-tertiary: 225, 225, 225;
     --ui-accent: 0, 122, 255;
     --text: #000;
     --text-secondary: #999;
@@ -13,7 +13,9 @@
     --font-size-ui: 14px;
     --font-size-small: 12px;
     --main-ui-blur: 8px;
-    --ui-transparancy: 0.8;
+    --ui-transparency: 0.8;
+    --ui-transparency-secondary: 0.4;
+    --ui-transparency-tertiary: 0.6;
     --round-main: 15px;
     --round-secondary: 12px;
     --round-small: 9px;
@@ -68,7 +70,7 @@ input,
     position: absolute;
     display: flex;
     flex-direction: column;
-    background-color: rgba(var(--ui-primary), var(--ui-transparancy));
+    background-color: rgba(var(--ui-primary), var(--ui-transparency));
     border: 1px solid rgba(var(--ui-tertiary));
     border-radius: var(--round-main);
     box-shadow: var(--big-shadow);
@@ -367,7 +369,7 @@ input,
     transition: 0.04s ease-in-out;
     padding: 0px;
     overflow: hidden;
-    border: 1px solid rgba(var(--ui-accent), 0.2);
+    border: 1px solid rgba(var(--ui-accent), 0.4);
 }
 
 .ui-small-btn:active {
@@ -377,7 +379,7 @@ input,
 .ui-small-btn-filler {
     background-color: rgba(var(--ui-accent), 0.2);
     width: 100%;
-    padding: 4px 6px;
+    padding: 3px 5px;
     box-sizing: border-box;
     font-size: var(--font-size-small) !important;
 }
@@ -391,48 +393,113 @@ input,
 .list-item {
     background-color: transparent;
     color: var(--text);
-    border: none;
+    border: 1px solid transparent;
     box-sizing: border-box;
     margin: 0px;
     width: 100%;
-    padding: 4px;
+    padding: 3px;
     overflow: hidden;
     text-align: left;
-    transition: 0.08s ease-in-out;
+    transition: 0.04s ease-in-out;
     border-radius: var(--round-small);
     font-weight: 400;
+    margin-bottom: 2px;
 }
 
 .list-item:hover {
     background-color: rgba(var(--ui-accent), 0.3);
+    border: 1px solid rgba(var(--ui-accent), 0.4);
 }
 
 .list-item.selected {
     background-color: rgba(var(--ui-accent), 0.3);
+    border: 1px dotted rgba(var(--ui-accent), 0.5);
 }
 
 .list-item:focus {
     background-color: rgba(var(--ui-accent), 0.3);
+    border: 1px solid rgba(var(--ui-accent), 0.5);
+}
+
+.taskbar-container {
+    position: fixed;
+    bottom: 4px;
+    left: 4px;
+    right: 4px;
+    height: 36px;
+    z-index: 9979;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .taskbar {
-    position: fixed;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
-    display: flex;
-    background-color: rgba(var(--ui-primary), var(--ui-transparancy));
+    background-color: rgba(var(--ui-primary), var(--ui-transparency-secondary));
     padding: 4px;
-    border-top: 1px solid rgba(var(--ui-secondary), 0.9);
+    border: 1px solid rgba(var(--ui-secondary), 0.9);
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
     z-index: 9980;
     box-shadow: var(--big-shadow);
+    border-radius: var(--round-main);
+}
+
+.menuBar-Menu {
+    border-radius: 7px !important;
+    width: 250px !important;
+    color: var(--text);
+}
+
+.ui-menubar-btn {
+    background-color: rgb(0, 0, 0, 0);
+    color: var(--text);
+    border: none;
+    border-radius: 5px;
+    box-sizing: border-box;
+    padding: 3px;
+    font-size: var(--font-size-small);
+}
+
+.ui-menubar-btn:hover {
+    background-color: rgba(var(--ui-accent), 1.0);
+}
+
+.menuBar {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    background-color: rgba(var(--ui-primary), var(--ui-transparency-secondary));
+    padding: 7px;
+    backdrop-filter: blur(var(--main-ui-blur));
+    --webkit-backdrop-filter: blur(var(--main-ui-blur));
+    z-index: 9980;
+    display: flex;
+}
+
+.menuBar-btn {
+    background-color: transparent;
+    border: none;
+    border-radius: 5px;
+    color: var(--text-inverse);
+}
+
+.menuBar-btn:active {
+    background-color: rgba(var(--ui-secondary), 0.3);
+}
+
+.webdesk-button {
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    box-sizing: border-box;
+    border-radius: 5px;
+    background-color: var(--text-inverse);
+    border: none;
 }
 
 .taskbar-menu {
     position: fixed;
-    background-color: rgba(var(--ui-primary), var(--ui-transparancy));
+    background-color: rgba(var(--ui-primary), var(--ui-transparency));
     padding: 8px;
     border: 1px solid rgba(var(--ui-tertiary));
     backdrop-filter: blur(var(--main-ui-blur));
@@ -477,6 +544,30 @@ input,
     box-sizing: border-box;
 }
 
+.message-box-group {
+    padding: 8px;
+    border-radius: var(--round-secondary);
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 7px;
+    box-shadow: var(--small-shadow);
+}
+
+.good {
+    background-color: rgba(30, 200, 30, 0.7);
+    border: 1px solid rgba(30, 200, 30, 1.0);
+}
+
+.okay {
+    background-color: rgba(240, 200, 30, 0.7);
+    border: 1px solid rgba(240, 200, 30, 1.0);
+}
+
+.bad {
+    background-color: rgba(200, 30, 30, 0.7);
+    border: 1px solid rgba(200, 30, 30, 1.0);
+}
+
 .box-group {
     padding: 8px;
     background-color: rgba(var(--ui-secondary), 0.7);
@@ -510,7 +601,10 @@ input,
 
 .blur-bg {
     position: fixed;
-    left: 0px; top: 0px; bottom: 0px; right: 0px;
+    left: 0px;
+    top: 0px;
+    bottom: 0px;
+    right: 0px;
     z-index: 999999999999999999999999999999999999999999999999999999999999999999;
     background-color: rgba(var(--ui-primary), 0.1);
     -webkit-backdrop-filter: blur(var(--main-ui-blur));
@@ -541,21 +635,22 @@ input,
     box-shadow: var(--big-shadow);
     padding: 20px;
     overflow: scroll;
-    max-width: 95%;
-    max-height: 95%;
+    max-width: 95% !important;
+    max-height: 95% !important;
 }
 
 .right-click-menu {
     position: fixed;
-    background-color: rgba(var(--ui-primary), 0.8);
-    padding: 6px;
-    border: 1px solid rgba(var(--ui-tertiary));
+    background-color: rgba(var(--ui-primary), var(--ui-transparency-secondary));
+    padding: 3px;
+    border: 1px solid rgba(var(--ui-tertiary), var(--ui-transparency-tertiary));
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
     border-radius: var(--round-secondary);
     z-index: 9998;
     box-shadow: var(--small-shadow);
     overflow: auto !important;
+    max-width: 88%;
 }
 
 .right-click-menu button {
@@ -682,7 +777,7 @@ input,
     border-radius: var(--round-main);
     padding: 10px;
     width: 300px;
-    background-color: rgba(var(--ui-primary), var(--ui-transparancy));
+    background-color: rgba(var(--ui-primary), var(--ui-transparency));
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -784,4 +879,41 @@ p {
     overflow: hidden;
     border: 0;
     color: rgba(0, 0, 0, 0.01);
+}
+
+.ui-switch {
+    display: flex;
+    width: 28px;
+    height: 15px;
+    border-radius: 100px;
+    padding: 1px;
+    margin: 0px;
+}
+
+.ui-switch-disabled {
+    background-color: rgba(var(--ui-tertiary), 1.0);
+    border: rgba(var(--ui-secondary), 1.0);
+    flex-direction: row;
+}
+
+.ui-switch-enabled {
+    background-color: rgba(var(--ui-accent), 1.0);
+    border: rgba(var(--ui-accent), 0.8);
+    flex-direction: row-reverse;
+}
+
+.ui-switch-knob {
+    height: 100%;
+    width: 15px;
+    box-sizing: border-box;
+    background-color: #fff;
+    border-radius: 50px;
+    box-shadow: 1px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Transition code by AI suggestion */
+
+.ui-switch,
+.ui-switch-knob {
+    transition: all 0.05s ease;
 }
