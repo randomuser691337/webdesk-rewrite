@@ -207,7 +207,7 @@ UI = {
             mainDiv.innerText = body;
         }
 
-        return { notif, name, time, mainDiv, titleDiv, iconImg, contents, wdNotifToast }
+        return notif, { notif, name, time, mainDiv, titleDiv, iconImg, contents, wdNotifToast }
     },
     getDate: function (type) {
         const now = new Date();
@@ -248,6 +248,7 @@ UI = {
         const headerbtns = this.create("div", header, "window-header-nav");
         const headertxt = this.create("div", header, "window-header-text");
         const content = this.create("div", win, "window-content");
+        let winFinal;
         headertxt.textContent = title;
         windowHighestZIndex += 1;
         win.style.zIndex = windowHighestZIndex;
@@ -296,6 +297,17 @@ UI = {
 
         updateWindow();
 
+        function closeWin() {
+            win.remove();
+            if (UI.previousFocusedWindow) {
+                try {
+                    UI.previousFocusedWindow.focusWindow();
+                } catch (error) {
+                    // eat shit and die
+                }
+            }
+        }
+
         closeBtn.addEventListener("click", () => {
             if (module) {
                 console.log(module);
@@ -303,7 +315,7 @@ UI = {
                     module.close();
                 }
             } else {
-                win.remove();
+                closeWin();
             }
         });
 
@@ -320,7 +332,7 @@ UI = {
                     const rect = btn.getBoundingClientRect();
                     const event = {
                         clientX: Math.floor(rect.left),
-                        clientY: Math.floor(rect.bottom)
+                        clientY: Math.floor(rect.bottom) + 6
                     };
 
                     const menu = UI.rightClickMenu(event);
@@ -364,20 +376,48 @@ UI = {
             }
         }
 
-        updateMenuBarItems();
-
-        function focusWindow() {
-            updateMenuBarItems();
+        function focusWindow(windowWasClickedByUser) {
             if (parseInt(win.style.zIndex) !== windowHighestZIndex) {
                 windowHighestZIndex += 1;
                 win.style.zIndex = windowHighestZIndex;
             }
-            UI.focusedWindow = winFinal;
+
+            if (windowWasClickedByUser) {
+                win.addEventListener('mouseup', function () {
+                    try {
+                        if (UI.previousFocusedWindow.ID !== ui.focusedWindow.ID) {
+                            UI.previousFocusedWindow = UI.focusedWindow;
+                        }
+                    } catch (error) {
+                        UI.previousFocusedWindow = UI.focusedWindow;
+                        UI.focusedWindow = winFinal;
+                    }
+                    UI.focusedWindow = winFinal;
+                });
+            } else {
+                try {
+                    if (UI.previousFocusedWindow.ID !== ui.focusedWindow.ID) {
+                        UI.previousFocusedWindow = UI.focusedWindow;
+                    }
+                } catch (error) {
+                    UI.previousFocusedWindow = UI.focusedWindow;
+                    UI.focusedWindow = winFinal;
+                }
+                UI.focusedWindow = winFinal;
+            }
+
+            updateMenuBarItems();
         }
 
-        const winFinal = { win, header, content, headertxt, headerbtns, title, buttons: { closeBtn, minBtn, maxBtn, container: headerbtns }, updateWindow, focusWindow, updateMenuBarItems }
+        winFinal = { win, header, content, headertxt, headerbtns, ID: title + windowHighestZIndex, title, buttons: { closeBtn, minBtn, maxBtn, container: headerbtns }, updateWindow, focusWindow, updateMenuBarItems, closeWin }
+
         win.addEventListener("mousedown", () => {
-            focusWindow();
+            focusWindow(true);
+        });
+
+        win.addEventListener("click", () => {
+            console.log('<i> fuck my life');
+            focusWindow(true);
         });
 
         win.click();
@@ -385,12 +425,13 @@ UI = {
         return winFinal;
     },
     img: async function (parent, path, classname) {
+        const img = this.create('img', parent, classname);
         const blob = await fs.read(path);
         if (blob instanceof Blob) {
-            const img = this.create('img', parent, classname);
             img.src = URL.createObjectURL(blob);
         } else {
-            console.log(`<!> ` + path + ` is not an image decodable by WebDesk's UI.`);
+            console.log(`<!> ` + path + ` is not an image decodable by WebDesk's UI. Trying URL...`);
+            img.src = path;
         }
     },
     changevar: function (varname, value) {
@@ -446,6 +487,7 @@ UI = {
         return snackbar;
     },
     focusedWindow: undefined,
+    previousFocusedWindow: undefined,
     System: {
         SystemMenus: {
             taskbar: undefined,

@@ -12,7 +12,7 @@ export async function launch(UI, fs, core, defaultlaunch, module) {
         var contents;
         codeToKillTask = function () {
             core2.removeModule(id);
-            UI.remove(win.win);
+            win.closeWin();
             win = undefined;
         }
         win = UI.window(title, module);

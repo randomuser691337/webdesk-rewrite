@@ -11,7 +11,7 @@ wfs3.onmessage = function (event) {
         type === 'result' ? resolve(data) : reject(data);
         delete pendingRequests3[requestId];
     } else {
-        switch (type) { 
+        switch (type) {
             case 'db_ready':
                 fsloaded3 = true;
                 console.log(`<i> Migration WFS loaded`);
@@ -21,6 +21,14 @@ wfs3.onmessage = function (event) {
                     wd.reboot();
                 } catch {
                     window.location.reload();
+                }
+                break;
+            case 'message':
+                try {
+                    // UI.snack(data);
+                    console.log(data);
+                } catch {
+                    console.log(data);
                 }
                 break;
             case 'runaway':

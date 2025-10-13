@@ -16,11 +16,13 @@
     --ui-transparency: 0.8;
     --ui-transparency-secondary: 0.4;
     --ui-transparency-tertiary: 0.6;
-    --round-main: 15px;
+    --round-main: 16px;
     --round-secondary: 12px;
     --round-small: 9px;
     --big-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
     --small-shadow: 1px 0 8px rgba(0, 0, 0, 0.12);
+    --margin-main: 0.3em;
+    --margin-small: 0.1em;
 }
 
 body {
@@ -42,7 +44,7 @@ body {
 
 p {
     font-family: var(--font-fam);
-    margin: 0px;
+    margin: var(--margin-main) !important;
     padding: 0px;
 }
 
@@ -54,7 +56,7 @@ button,
 input,
 .webdesk-ui-styling {
     font-family: var(--font-fam);
-    font-weight: 600;
+    font-weight: 500;
     font-size: var(--font-size-ui);
     will-change: transform;
 }
@@ -179,15 +181,13 @@ input,
 }
 
 .window-btn {
-    width: 12px;
-    height: 12px;
-    max-width: 12px !important;
-    max-height: 12px !important;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     overflow: hidden;
     border: none;
     position: relative;
-    margin-right: 7px;
+    margin-right: 9px;
 }
 
 .window-btn:last-child {
@@ -210,7 +210,7 @@ input,
 }
 
 .close-btn:active {
-    filter: brightness(1.05);
+    filter: brightness(1.15);
 }
 
 .min-btn {
@@ -231,7 +231,7 @@ input,
 
 .close-btn:before,
 .close-btn:after {
-    width: 1px;
+    width: 1.5px;
     height: 70%;
     background: #460100;
 }
@@ -250,7 +250,7 @@ input,
 
 .min-btn:before {
     width: 70%;
-    height: 1px;
+    height: 1.5px;
     background: #460100;
 }
 
@@ -279,7 +279,7 @@ input,
     border: none;
     border-radius: var(--round-secondary);
     box-sizing: border-box;
-    margin: 1px;
+    margin: var(--margin-small);
     transition: 0.03s ease-in-out;
     padding: 0px;
     border: 1px solid rgba(var(--ui-accent), 0.45);
@@ -320,7 +320,7 @@ input,
     border: none;
     border-radius: var(--round-secondary);
     box-sizing: border-box;
-    margin: 1px;
+    margin: var(--margin-small);
     transition: 0.04s ease-in-out;
     padding: 0px;
     overflow: hidden;
@@ -335,7 +335,7 @@ input,
     border: none;
     border-radius: var(--round-small);
     box-sizing: border-box;
-    margin: 1px;
+    margin: var(--margin-small);
     transition: 0.04s ease-in-out;
     padding: 0px;
     overflow: hidden;
@@ -403,7 +403,7 @@ input,
     transition: 0.04s ease-in-out;
     border-radius: var(--round-small);
     font-weight: 400;
-    margin-bottom: 2px;
+    margin-bottom: var(--margin-main);
 }
 
 .list-item:hover {
@@ -426,7 +426,6 @@ input,
     bottom: 4px;
     left: 4px;
     right: 4px;
-    height: 36px;
     z-index: 9979;
     display: flex;
     justify-content: center;
@@ -436,7 +435,7 @@ input,
 .taskbar {
     background-color: rgba(var(--ui-primary), var(--ui-transparency-secondary));
     padding: 4px;
-    border: 1px solid rgba(var(--ui-secondary), 0.9);
+    border: 1px solid rgba(var(--ui-secondary), var(--ui-transparency-secondary));
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
     z-index: 9980;
@@ -446,7 +445,7 @@ input,
 
 .menuBar-Menu {
     border-radius: 7px !important;
-    width: 250px !important;
+    width: 200px;
     color: var(--text);
 }
 
@@ -461,7 +460,7 @@ input,
 }
 
 .ui-menubar-btn:hover {
-    background-color: rgba(var(--ui-accent), 1.0);
+    background-color: rgba(var(--ui-secondary), 0.3);
 }
 
 .menuBar {
@@ -481,7 +480,7 @@ input,
     background-color: transparent;
     border: none;
     border-radius: 5px;
-    color: var(--text-inverse);
+    color: var(--text);
 }
 
 .menuBar-btn:active {
@@ -493,7 +492,7 @@ input,
     aspect-ratio: 1 / 1;
     box-sizing: border-box;
     border-radius: 5px;
-    background-color: var(--text-inverse);
+    background-color: var(--text);
     border: none;
 }
 
@@ -549,7 +548,7 @@ input,
     border-radius: var(--round-secondary);
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 7px;
+    margin-bottom: var(--margin-small);
     box-shadow: var(--small-shadow);
 }
 
@@ -575,7 +574,7 @@ input,
     border-radius: var(--round-secondary);
     width: 100%;
     box-sizing: border-box;
-    margin-bottom: 7px;
+    margin-bottom: var(--margin-main);
     box-shadow: var(--small-shadow);
 }
 
@@ -584,8 +583,8 @@ input,
     width: 100%;
     height: 1px;
     background-color: rgba(var(--ui-secondary), 0.5);
-    margin-top: 7px;
-    margin-bottom: 7px;
+    margin-top: var(--margin-main);
+    margin-bottom: var(--margin-main);
     filter: invert(0.1);
 }
 
@@ -643,7 +642,7 @@ input,
     position: fixed;
     background-color: rgba(var(--ui-primary), var(--ui-transparency-secondary));
     padding: 3px;
-    border: 1px solid rgba(var(--ui-tertiary), var(--ui-transparency-tertiary));
+    border: 1px solid rgba(var(--ui-tertiary), var(--ui-transparency-secondary));
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
     border-radius: var(--round-secondary);
@@ -787,15 +786,15 @@ input,
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
     position: relative;
     /* Add this to allow absolute positioning of child */
-    overflow: visible;
+    overflow: visiblel;
     /* Allow child to overflow */
 }
 
 .wd-notif-close-button {
-    position: absolute;
+    position: fixed;
     /* Change to absolute for positioning inside .wd-notif */
-    left: -12px;
-    top: -12px;
+    left: 4px;
+    top: 4px;
     border-radius: 50%;
     width: 24px;
     height: 24px;
@@ -886,8 +885,13 @@ p {
     width: 28px;
     height: 15px;
     border-radius: 100px;
-    padding: 1px;
+    padding: 2px;
     margin: 0px;
+}
+
+.ui-switch:active {
+    box-shadow: 1px 0 6px rgba(0, 0, 0, 0.25);
+    transform: scale(1.1);
 }
 
 .ui-switch-disabled {
@@ -915,5 +919,27 @@ p {
 
 .ui-switch,
 .ui-switch-knob {
-    transition: all 0.05s ease;
+    transition: all 0.1s ease;
+}
+
+.header-img {
+    width: 42px;
+    height: 42px;
+    border: none;
+}
+
+.small-round {
+    border-radius: var(--round-small);
+}
+
+.small-shadow {
+    box-shadow: var(--small-shadow);
+}
+
+.header-img-solid {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: var(--round-small);
+    box-shadow: var(--small-shadow);
 }

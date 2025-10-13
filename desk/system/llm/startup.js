@@ -6,8 +6,8 @@ export var name = "LLM engine"
 
 export async function main(UI, ready, modelName) {
     console.log("Let there be LLMs");
-    const textContain = UI.create('div', document.body, 'llm-prog');
-    const text = UI.text(textContain, 'Downloading or loading LLM...');
+    const textContain = await UI.notif('AI features', 'Loading LLM...');
+    const text = textContain.mainDiv;
 
     const estimateTotalSizeMB = (fetchedMB, progressFraction) => {
         if (progressFraction <= 0) return null;

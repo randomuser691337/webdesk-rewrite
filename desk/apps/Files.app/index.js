@@ -16,7 +16,7 @@ export async function launch(UI, fs, core, unused, module) {
     win = UI.window('Files', module);
     codeToKillTask = function () {
         core2.removeModule(id);
-        UI.remove(win.win);
+        win.closeWin();
         win = undefined;
     };
     win.win.style.width = "600px";
@@ -214,7 +214,7 @@ export async function pickFile(UI, fs, core) {
         win = UI.window('File Picker');
         codeToKillTask = function () {
             core2.removeModule(id);
-            UI.remove(win.win);
+            win.closeWin();
             win = undefined;
         };
         win.win.style.width = "600px";

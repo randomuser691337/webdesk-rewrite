@@ -40,22 +40,22 @@ export async function launch(UI, fs, core, unused, module) {
     const userBar = UI.leftRightLayout(accountDiv);
     userBar.left.innerHTML = `<span class="bold">${UI.userName}</span>`;
     const manageBtn = UI.button(userBar.right, '⚙️', 'ui-small-btn');
-    manageBtn.addEventListener('click', () => {
+    manageBtn.addEventListener('click', function () {
         userAcc();
     });
 
     const generalButton = UI.button(sidebarcontent, 'General', 'ui-med-btn wide');
-    generalButton.addEventListener('click', () => {
+    generalButton.addEventListener('click', function () {
         General();
     });
 
     const personalizeButton = UI.button(sidebarcontent, 'Personalize', 'ui-med-btn wide');
-    personalizeButton.addEventListener('click', () => {
+    personalizeButton.addEventListener('click', function () {
         Personalize();
     });
 
     const llmButton = UI.button(sidebarcontent, 'Manage AI', 'ui-med-btn wide');
-    llmButton.addEventListener('click', () => {
+    llmButton.addEventListener('click', function () {
         Assistant();
     });
 
@@ -90,6 +90,7 @@ export async function launch(UI, fs, core, unused, module) {
         const bg = UI.create('div', document.body, 'blur-bg');
         const menu = UI.create('div', bg, 'cm');
         menu.style.width = "250px";
+        UI.img(menu, '/system/lib/img/warn.svg', 'header-img');
         UI.text(menu, `Are you sure you want to erase all data? This can't be undone.`, 'bold');
         UI.text(menu, `Your WebDesk account won't be affected.`);
         const erase = UI.button(menu, 'Erase WebDesk', 'ui-med-btn wide');
@@ -113,15 +114,9 @@ export async function launch(UI, fs, core, unused, module) {
     }
 
     async function General() {
+        // The lion should not question why group0 comes after group1.
         content.innerHTML = '';
         title.innerText = "General";
-        const group0 = UI.create('div', content, 'box-group');
-        const group0bar = UI.leftRightLayout(group0);
-        group0bar.left.innerHTML = '<span class="smalltxt">Danger Zone</span>';
-        const eraseBtn = UI.button(group0bar.right, 'Erase...', 'ui-med-btn');
-        eraseBtn.addEventListener('click', function () {
-            eraseWarn();
-        });
         const group1 = UI.create('div', content, 'box-group');
         const appearbar = UI.leftRightLayout(group1);
         appearbar.left.innerHTML = '<span class="smalltxt">Low-end device mode</span>';
@@ -130,22 +125,22 @@ export async function launch(UI, fs, core, unused, module) {
             UI.switch.check(enableBtn);
         }
 
-        let lowEndMenu;
-
         enableBtn.addEventListener('click', () => {
-            UI.remove(lowEndMenu);
-            lowEndMenu = UI.create('div', document.body, 'cm');
             if (UI.switch.checked(enableBtn) === false) {
                 set.del('lowend');
-                UI.text(lowEndMenu, 'Restart WebDesk to disable low-end device mode');
+                UI.System.lowgfxMode(false);
             } else {
                 set.write('lowend', 'true');
-                UI.text(lowEndMenu, 'Restart WebDesk to enable low-end device mode');
+                UI.System.lowgfxMode(true);
             }
-            const btn = UI.button(lowEndMenu, 'Restart', 'ui-med-btn');
-            btn.addEventListener('click', function () { window.location.reload(); });
-            const btn2 = UI.button(lowEndMenu, `I'll do it later`, 'ui-med-btn');
-            btn2.addEventListener('click', function () { UI.remove(lowEndMenu); });
+        });
+
+        const group0 = UI.create('div', content, 'box-group');
+        const group0bar = UI.leftRightLayout(group0);
+        group0bar.left.innerHTML = '<span class="smalltxt">Danger Zone</span>';
+        const eraseBtn = UI.button(group0bar.right, 'Erase...', 'ui-med-btn');
+        eraseBtn.addEventListener('click', function () {
+            eraseWarn();
         });
     }
 
@@ -175,8 +170,8 @@ export async function launch(UI, fs, core, unused, module) {
             const group1 = UI.create('div', content, 'box-group');
             const appearbar = UI.leftRightLayout(group1);
             appearbar.left.innerHTML = '<span class="smalltxt">AI features</span>';
-            const enableBtn = UI.button(appearbar.right, 'Enable', 'ui-med-btn wide');
-            const disableBtn = UI.button(appearbar.right, 'Disable', 'ui-med-btn wide');
+            const enableBtn = UI.button(appearbar.right, 'Enable', 'ui-med-btn');
+            const disableBtn = UI.button(appearbar.right, 'Disable', 'ui-med-btn');
             disableBtn.addEventListener('click', async function () {
                 if (sys.LLMLoaded !== false) {
                     const areyousure = UI.create('div', document.body, 'cm');
@@ -328,18 +323,18 @@ export async function launch(UI, fs, core, unused, module) {
         const appearbar = UI.leftRightLayout(group1);
         appearbar.left.innerHTML = '<span class="smalltxt">Appearance</span>';
 
-        const lightBtn = UI.button(appearbar.right, 'Light', 'ui-med-btn wide');
+        const lightBtn = UI.button(appearbar.right, 'Light', 'ui-med-btn');
         lightBtn.addEventListener('click', () => {
             UI.System.lightMode();
             set.write('appearance', 'light');
         });
-        const darkBtn = UI.button(appearbar.right, 'Dark', 'ui-med-btn wide');
+        const darkBtn = UI.button(appearbar.right, 'Dark', 'ui-med-btn');
         darkBtn.addEventListener('click', () => {
             UI.System.darkMode();
             set.write('appearance', 'dark');
         });
 
-        const autoBtn = UI.button(appearbar.right, 'Auto', 'ui-med-btn wide');
+        const autoBtn = UI.button(appearbar.right, 'Auto', 'ui-med-btn');
         autoBtn.addEventListener('click', () => {
             const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
             if (prefersDarkScheme.matches) {
@@ -441,12 +436,13 @@ export async function launch(UI, fs, core, unused, module) {
 
     win.updateWindow();
     DynamicResize();
+    General();
 
     return {
-        General: General(),
-        Assistant: Assistant(),
-        Personalize: Personalize(),
-        DynamicResize: DynamicResize(),
+        General: General,
+        Assistant: Assistant,
+        Personalize: Personalize,
+        DynamicResize: DynamicResize,
     };
 }
 
@@ -454,6 +450,6 @@ export async function close() {
     fs.rm('/tmp/settings-open');
     core2.removeModule(id);
     resizeObserver.unobserve(win.win);
-    UI.remove(win.win);
+    win.closeWin();
     win = undefined;
 }

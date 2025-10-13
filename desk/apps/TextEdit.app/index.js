@@ -13,7 +13,7 @@ export async function launch(UI, fs, core, defaultlaunch, module) {
         win = UI.window('TextEdit', module);
         codeToKillTask = function () {
             core2.removeModule(id);
-            UI.remove(win.win);
+            win.closeWin();
             win = undefined;
         }
         win.win.style.width = "600px";

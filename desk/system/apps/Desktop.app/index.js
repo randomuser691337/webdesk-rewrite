@@ -168,27 +168,12 @@ export async function launch(UI, fs, core) {
         if (sys.LLMLoaded !== true) {
             if (sys.LLMLoaded === false) {
                 UI.text(messagebox, UI.LLMName + "'s deactivated.");
-                UI.text(messagebox, "Would you like to reactivate her?");
+                UI.text(messagebox, "Would you like to reactivate it? WebDesk will restart.");
                 const button = UI.button(messagebox, 'Reactivate', 'ui-big-btn');
                 button.addEventListener('click', async function () {
                     messagebox.innerHTML = `<p>You reactivated ${UI.LLMName}.</p><p>Loading...</p>`;
                     set.del('chloe');
-                    const ai = await fs.read('/system/llm/startup.js');
-                    let model = set.read('LLMModel');
-                    if (!model) model = "Qwen2.5-1.5B-Instruct-q4f16_1-MLC"
-                    core.loadModule(ai).then(async (mod) => {
-                        let readyResolve;
-                        let ready = new Promise((resolve) => {
-                            readyResolve = resolve;
-                        });
-                        mod.main(UI, readyResolve, model);
-                        ready.then(() => {
-                            closeCurrentMenu();
-                            llmBTN.click();
-                            sys.LLMLoaded = true;
-                        });
-                        sys.LLM = mod;
-                    });
+                    window.location.reload();
                 });
             } else {
                 UI.text(messagebox, UI.LLMName + "'s loading...");

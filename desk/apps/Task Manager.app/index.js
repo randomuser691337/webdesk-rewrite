@@ -78,6 +78,6 @@ export async function close() {
     document.body.removeEventListener('click', function () {
         focusedModule = undefined;
     });
-    UI.remove(win.win);
+    win.closeWin();
     win = undefined;
 }

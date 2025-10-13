@@ -11,7 +11,7 @@ export async function launch(UI, fs, core, undefined, module) {
     core2 = core;
     codeToKillTask = function () {
         core2.removeModule(id);
-        UI.remove(win.win);
+        win.closeWin();
         win = undefined;
     }
     win = UI.window('Migration Assistant');
@@ -19,7 +19,7 @@ export async function launch(UI, fs, core, undefined, module) {
     UI.text(win.content, 'Save your work before continuing.');
     const btn = UI.button(win.content, 'Continue', 'ui-med-btn');
     btn.addEventListener('click', async () => {
-        UI.remove(win.win);
+        win.closeWin();
         await migratePane(UI, fs, core);
     });
 }
