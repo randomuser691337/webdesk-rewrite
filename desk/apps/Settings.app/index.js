@@ -11,7 +11,7 @@ export async function launch(UI, fs, core, unused, module) {
         core2.removeModule(id);
         return;
     }
-    win = UI.window(name, module);
+    win = UI.window(name, module, undefined, '/apps/Settings.app/icon.svg');
     fs.write('/tmp/settings-open', win);
     console.log(window.outerWidth);
     if (window.outerWidth < 470) {
@@ -94,6 +94,9 @@ export async function launch(UI, fs, core, unused, module) {
         UI.text(menu, `Are you sure you want to erase all data? This can't be undone.`, 'bold');
         UI.text(menu, `Your WebDesk account won't be affected.`);
         const erase = UI.button(menu, 'Erase WebDesk', 'ui-med-btn wide');
+        erase.addEventListener('click', function () {
+            fs.erase();
+        });
         const close = UI.button(menu, 'Cancel', 'ui-med-btn wide');
         close.addEventListener('click', function () {
             UI.remove(bg);
@@ -230,7 +233,7 @@ export async function launch(UI, fs, core, unused, module) {
             const appearbar2 = UI.leftRightLayout(group2);
             appearbar2.left.innerHTML = '<span class="smalltxt">LLM to use</span>';
             let modeln = await set.read('LLMModel');
-            if (modeln === undefined) modeln = "Qwen2.5-1.5B-Instruct-q4f32_1-MLC";
+            if (modeln === undefined) modeln = "Qwen2.5-3B-Instruct-q4f32_1-MLC";
             const dropBtn = UI.button(appearbar2.right, UI.truncate(modeln, 25), 'ui-med-btn wide');
             dropBtn.dropBtnDecor();
 
@@ -253,7 +256,7 @@ export async function launch(UI, fs, core, unused, module) {
                     btn2.addEventListener('click', async function () {
                         set.del('LLMModel');
                         await sys.LLM.deactivate();
-                        dropBtn.Filler.innerText = UI.truncate('Qwen2.5-1.5B-Instruct-q4f32_1-MLC', 25);
+                        dropBtn.Filler.innerText = UI.truncate('Qwen2.5-3B-Instruct-q4f32_1-MLC', 25);
                         await wd.startLLM();
                     });
                     models.forEach(function (model) {
@@ -304,6 +307,8 @@ export async function launch(UI, fs, core, unused, module) {
                 const textedit = await mod.launch(UI, fs);
                 textedit.open('/system/llm/prompt.txt');
             });
+
+            UI.text(content, `Qwen2.5-3B-Instruct-q4f32_1-MLC has the best balance of knowledge and performance, and runs okay on medium-high end devices.`, 'smalltxt');
 
             await getTotalCacheSize(cacheArrays)
                 .then(sizeBytes => {

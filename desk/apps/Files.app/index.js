@@ -13,7 +13,7 @@ var win;
 
 export async function launch(UI, fs, core, unused, module) {
     core2 = core;
-    win = UI.window('Files', module);
+    win = UI.window('Files', module, undefined, '/apps/Files.app/icon.svg');
     codeToKillTask = function () {
         core2.removeModule(id);
         win.closeWin();
@@ -34,9 +34,9 @@ export async function launch(UI, fs, core, unused, module) {
     UI.create('span', sidebarcontent, 'smalltxt').textContent = "Favorites";
 
     const buttonhome = UI.button(sidebarcontent, 'Home', 'list-item');
-    buttonhome.onclick = () => {
+    buttonhome.addEventListener('click', () => {
         nav("/user/");
-    };
+    });
 
     const container = UI.create('div', win.content, 'window-split-content');
     const crumbs = UI.create('div', container, 'window-draggable');
@@ -132,15 +132,14 @@ export async function launch(UI, fs, core, unused, module) {
                 contextMenu = UI.rightClickMenu(event);
 
                 const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn wide');
-                openButton.onclick = async () => {
+                openButton.addEventListener('click', async function () {
                     if (file.kind === "directory") {
                         await nav(file.path);
                     } else {
                         await openfile();
                     }
                     contextMenu.remove();
-                };
-
+                })
                 const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn wide');
                 deleteButton.onclick = async () => {
                     contextMenu.remove();
@@ -252,10 +251,10 @@ export async function pickFile(UI, fs, core) {
         win.header.innerHTML = "";
         UI.create('span', win.header, 'smalltxt').textContent = "Select a file";
         const cancelButton = UI.button(win.header, 'Cancel', 'ui-small-btn wide');
-        cancelButton.onclick = () => {
+        cancelButton.addEventListener('click', () => {
             win.buttons.closeBtn.click();
             resolve(null);
-        };
+        });
 
         let dir;
         async function nav(path) {
@@ -263,9 +262,9 @@ export async function pickFile(UI, fs, core) {
             filelist.innerHTML = "";
             crumbs.innerHTML = "";
             const buttonhome = UI.button(crumbs, '/', 'ui-small-btn');
-            buttonhome.onclick = () => {
+            buttonhome.addEventListener('click', () => {
                 nav("");
-            };
+            });
             const trimmedPath = path.replace(/\/+$/, '');
             const parts = trimmedPath.split('/').filter(Boolean);
 
@@ -277,9 +276,9 @@ export async function pickFile(UI, fs, core) {
                 const crumbPath = parts.slice(0, index + 1).join('/');
 
                 const button = UI.button(crumbs, part, 'ui-small-btn');
-                button.onclick = () => {
+                button.addEventListener('click', () => {
                     nav(crumbPath);
-                };
+                });
 
                 breadcrumbs.push(button);
             });

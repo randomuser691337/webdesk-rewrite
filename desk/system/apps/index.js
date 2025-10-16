@@ -130,11 +130,4 @@
         }
     });
 
-    const blob = await fs.read('/system/lib/wallpaper.jpg');
-    if (blob instanceof Blob) {
-        const imageUrl = URL.createObjectURL(blob);
-        document.body.style.backgroundImage = `url('${imageUrl}')`;
-    } else {
-        console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
-    }
 })();

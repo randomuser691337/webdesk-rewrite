@@ -29,6 +29,12 @@
             },
         }
 
+        function gen(min, max) {
+            min = Math.ceil(min);
+            max = Math.floor(max);
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
         var core = {
             latestVersion: '0.3.3',
             lowgfxMode: false,
@@ -215,6 +221,7 @@
         config: undefined,
         LLM: undefined,
         LLMLoaded: false,
+        OPFSSupported: false,
     };
 
     var webid = {
@@ -222,31 +229,72 @@
         userid: undefined,
     }
     let forceIDB = false;
-    var isOPFSSupported = false;
     (async () => {
+        // Debugged by AI
         if ('storage' in navigator && 'getDirectory' in navigator.storage) {
             try {
-                const root = await navigator.storage.getDirectory();
-                const file = await root.getFileHandle('test.txt', { create: true });
-                const writer = await file.createWritable();
-                await writer.write('test');
-                await writer.close();
-                await root.removeEntry('test.txt');
-                isOPFSSupported = true;
-                if (forceIDB === true) {
-                    isOPFSSupported = false;
+                const testWorker = new Worker('./wfs.js');
+                var currentopsTest = []
+                const TestFS = {
+                    read: function (path) {
+                        const uID = gen(0, 9999);
+                        return new Promise((resolve, reject) => {
+                            currentopsTest.push({ uID, resolve, reject });
+                            testWorker.postMessage({ optype: "read", uID, data: path });
+                        });
+                    },
+                    write: function (path, data, filetype = "text") {
+                        const uID = gen(0, 9999);
+                        return new Promise((resolve, reject) => {
+                            currentopsTest.push({ uID, resolve, reject });
+                            testWorker.postMessage({ optype: "write", uID, data: path, data2: data, filetype: filetype });
+                        });
+                    },
+                    rm: function (path, recursive = false) {
+                        const uID = gen(0, 9999);
+                        return new Promise((resolve, reject) => {
+                            currentopsTest.push({ uID, resolve, reject });
+                            testWorker.postMessage({ optype: "rm", uID, data: path, data2: recursive });
+                        });
+                    },
                 }
-            } catch (e) {
-                console.warn("OPFS write test failed:", e);
-                isOPFSSupported = false;
+
+                testWorker.addEventListener("message", (msg) => {
+                    if (msg.data.optype === "ready") {
+                        console.log('<i> Loaded OPFS support tester');
+                    }
+                    currentopsTest.filter(op => {
+                        if (op.uID === msg.data.uID) {
+                            op.resolve(msg.data.data);
+                            return false;
+                        }
+                        return true;
+                    });
+                });
+
+                await TestFS.write('/system/OPFSSupported', 'true');
+                const test = await TestFS.read('/system/OPFSSupported');
+                if (test === "true") {
+                    TestFS.rm('/system/OPFSSupported');
+                    sys.OPFSSupported = true;
+                }
+                const script = document.createElement('script');
+                script.src = sys.OPFSSupported && !forceIDB ? "./fs.js" : "./oldfs.js";
+                document.body.appendChild(script);
+            } catch (error) {
+                console.log(error);
+                sys.OPFSSupported = false;
+                const script = document.createElement('script');
+                script.src = "./oldfs.js";
+                document.body.appendChild(script);
             }
+        } else {
+            console.log(`<!> Browser doesn't report support!`);
+            const script = document.createElement('script');
+            script.src = "./oldfs.js";
+            document.body.appendChild(script);
         }
-
-        console.log("OPFS supported?", isOPFSSupported);
-
-        const script = document.createElement('script');
-        script.src = isOPFSSupported ? "./fs.js" : "./oldfs.js";
-        document.body.appendChild(script);
+        console.log("OPFS supported?", sys.OPFSSupported);
     })();
 </script>
 <!--<script type="module">

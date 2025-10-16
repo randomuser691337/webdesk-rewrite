@@ -13,9 +13,9 @@
     --font-size-ui: 14px;
     --font-size-small: 12px;
     --main-ui-blur: 8px;
-    --ui-transparency: 0.8;
-    --ui-transparency-secondary: 0.4;
-    --ui-transparency-tertiary: 0.6;
+    --ui-transparency: 0.9;
+    --ui-transparency-secondary: 0.5;
+    --ui-transparency-tertiary: 0.7;
     --round-main: 16px;
     --round-secondary: 12px;
     --round-small: 9px;
@@ -36,6 +36,7 @@ body {
     background-attachment: fixed;
     padding: 0px;
     margin: 0px;
+    overflow: hidden;
 }
 
 .bold {
@@ -339,12 +340,12 @@ input,
     transition: 0.04s ease-in-out;
     padding: 0px;
     overflow: hidden;
-    border: 1px solid rgba(var(--ui-accent), 0.4);
+    border: 1px solid rgba(var(--ui-accent), 0.5);
 }
 
 .ui-med-btn:active {
     background-color: rgba(var(--ui-secondary), 1.0);
-    border: 1px solid rgba(var(--ui-accent), 0.45);
+    border: 1px solid rgba(var(--ui-accent), 0.55);
 }
 
 .ui-med-btn-filler {
@@ -550,6 +551,7 @@ input,
     box-sizing: border-box;
     margin-bottom: var(--margin-small);
     box-shadow: var(--small-shadow);
+    margin-bottom: var(--margin-main);
 }
 
 .good {
@@ -629,7 +631,7 @@ input,
 .setup-window {
     width: 600px;
     height: 400px;
-    background-color: rgba(var(--ui-primary), 0.95);
+    background-color: rgba(var(--ui-primary), 1);
     border-radius: var(--round-main);
     box-shadow: var(--big-shadow);
     padding: 20px;
@@ -673,8 +675,8 @@ input,
 
 .ring {
     position: relative;
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     mask-image: radial-gradient(circle, transparent 48%, black 49%);
     -webkit-mask-image: radial-gradient(circle, transparent 48%, black 49%);
@@ -761,8 +763,7 @@ input,
 
 .notif-pane {
     position: fixed;
-    top: 12px;
-    right: 12px;
+    right: 0px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -770,6 +771,9 @@ input,
     max-width: 300px;
     max-height: calc(100vh - 40px);
     overflow: hidden;
+    padding: 8px;
+    padding-left: 30px;
+    padding-bottom: 30px;
 }
 
 .wd-notif {
@@ -784,15 +788,11 @@ input,
     box-sizing: border-box;
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
-    position: relative;
-    /* Add this to allow absolute positioning of child */
-    overflow: visiblel;
-    /* Allow child to overflow */
+    overflow: visible;
 }
 
 .wd-notif-close-button {
     position: fixed;
-    /* Change to absolute for positioning inside .wd-notif */
     left: 4px;
     top: 4px;
     border-radius: 50%;
@@ -942,4 +942,42 @@ p {
     border: none;
     border-radius: var(--round-small);
     box-shadow: var(--small-shadow);
+}
+
+.ui-dock-btn {
+    background-color: rgba(0, 0, 0, 0);
+    border: none;
+    padding: 0px !important;
+}
+
+.ui-dock-btn:active {
+    filter: brightness(0.7);
+}
+
+.dock-icon {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: var(--round-small);
+    box-shadow: var(--small-shadow);
+    margin: 0px;
+    vertical-align: middle;
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(var(--ui-tertiary), 1.0);
+    border-radius: var(--round-small);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(var(--ui-accent), 1.0);
+    border-radius: var(--round-small);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: rgba(var(--ui-accent), 1.0);
 }

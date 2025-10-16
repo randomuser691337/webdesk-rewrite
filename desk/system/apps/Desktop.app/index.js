@@ -13,10 +13,16 @@ export async function launch(UI, fs, core) {
     const leftMenuBar = UI.create('div', menubar, 'window-header-nav');
     const rightMenuBar = UI.create('div', menubar, 'window-header-text');
     const left = UI.create('div', taskbar, 'window-header-nav');
-    const appBTN = UI.button(left, 'Apps', 'ui-big-btn');
+    const appBTN = UI.button(left, '', 'ui-dock-btn');
+    UI.img(appBTN, '/system/lib/img/apps.svg', 'dock-icon');
     const llmBTN = UI.button(left, '', 'ring-btn');
     const contLLM = UI.create('div', llmBTN, 'waiting');
     const ring = UI.create('div', contLLM, 'ring');
+
+    UI.System.SystemMenus.taskbarWindows = UI.create('div', left);
+    UI.System.SystemMenus.notifArea = UI.create('div', document.body, 'notif-pane');
+    UI.System.SystemMenus.notifArea.style.top = menubar.offsetHeight + 18 + "px";
+
     const contBTN = UI.button(rightMenuBar, 'Controls', 'ui-menubar-btn');
     if (sys.LLMLoaded === "unsupported") {
         llmBTN.style.display = "none";
@@ -25,7 +31,32 @@ export async function launch(UI, fs, core) {
     leftMenuBar.style.height = "16px";
     rightMenuBar.style.height = "16px";
     const webdeskButton = UI.create('button', leftMenuBar, 'webdesk-button');
+
+    webdeskButton.addEventListener('mousedown', function () {
+        const rect = webdeskButton.getBoundingClientRect();
+        const event = {
+            clientX: Math.floor(rect.left),
+            clientY: Math.floor(rect.bottom) + 6
+        };
+
+        const menu = UI.rightClickMenu(event);
+        menu.classList.add('menuBar-Menu');
+
+        const menuBarItems2 = [{
+            name: "Reload", action: function () {
+                window.location.reload();
+            }
+        }];
+
+        menuBarItems2.forEach(function (child) {
+            const btn2 = UI.button(menu, child.name, 'ui-menubar-btn wide');
+            btn2.addEventListener('click', child.action);
+            btn2.addEventListener('mouseup', child.action);
+        });
+    });
+
     UI.System.SystemMenus.MenuBarActions = UI.create('div', leftMenuBar);
+    UI.System.SystemMenus.MenuBarActions.innerHTML = `<button class="med menuBar-btn">Desktop</button>`;
 
     let currentMenu = {
         element: null,
@@ -60,7 +91,7 @@ export async function launch(UI, fs, core) {
         const taskrect = taskbar.getBoundingClientRect();
         // Centering line corrected by AI
         menu.style.left = (taskrect.left + (taskrect.width / 2)) - (menu.offsetWidth / 2) + "px";
-        menu.style.bottom = taskrect.height + 4 + "px";
+        menu.style.bottom = taskrect.height + 8 + "px";
         const name = await set.read('name');
         if (name !== null) {
             UI.text(menu, name);
@@ -126,73 +157,49 @@ export async function launch(UI, fs, core) {
         let messages = []
 
         const llmGo = await fs.read('/system/llm/prompt.txt');
+        messages.push({
+            content: llmGo.replace('${NAME}', UI.LLMName || "Chloe"),
+            role: "system"
+        });
 
         try {
             messages.push({
-                content: `Your name is ${UI.LLMName}` + llmGo,
-                role: "system"
-            });
-
-            messages.push({
-                role: "system",
-                content: `Focused window info:\nTitle: ${UI.focusedWindow.title}\nContent:\n${UI.focusedWindow.content.outerHTML}`
+                content: `I have a window opened, use it's contents to help me. \n Title: ${UI.focusedWindow.title}\nContent:\n${UI.focusedWindow.content.outerHTML}`,
+                role: "user"
             });
         } catch (error) {
-            console.log(error);
-            messages.push({
-                content: `Your name is ${UI.LLMName}` + llmGo,
-                role: "system"
-            });
+            console.log("<i> window read failed");
+        }
 
+        try {
             messages.push({
-                content: `No windows accessible.`,
-                role: "system"
+                content: `I have a second window opened too, use it's contents to help me. \n Title: ${UI.previousFocusedWindow.title}\nContent:\n${UI.previousFocusedWindow.content.outerHTML}`,
+                role: "user"
             });
+        } catch (error) {
+            console.log("<i> second window read failed");
         }
 
         const menu = UI.create('div', document.body, 'taskbar-menu');
         menu.style.width = "300px";
         const messagebox = UI.create('div', menu);
-        const warn = UI.text(messagebox, UI.LLMName + " may make mistakes. Don't trust it for sensitive topics.", 'smalltxt bold');
         messagebox.style.height = "400px";
         messagebox.style.overflow = "auto";
 
-        const taskrect = taskbar.getBoundingClientRect();
-        menu.style.left = (taskrect.left + (taskrect.width / 2)) - (menu.offsetWidth / 2) + "px";
-        menu.style.bottom = taskrect.height + 4 + "px";
+        UI.text(messagebox, `${UI.LLMName} may make mistakes. Don't trust it for sensitive topics.`, 'smalltxt');
 
-        currentMenu.element = menu;
-        currentMenu.type = "llm";
-        document.addEventListener('mousedown', handleOutsideClick);
+        const layout = UI.leftRightLayout(menu);
+        const input = UI.create('input', layout.left, 'ui-main-input wide');
+        input.placeholder = `Ask ${UI.LLMName} anything...`;
+        const btn = UI.button(layout.right, 'Send', 'ui-med-btn');
 
-        if (sys.LLMLoaded !== true) {
-            if (sys.LLMLoaded === false) {
-                UI.text(messagebox, UI.LLMName + "'s deactivated.");
-                UI.text(messagebox, "Would you like to reactivate it? WebDesk will restart.");
-                const button = UI.button(messagebox, 'Reactivate', 'ui-big-btn');
-                button.addEventListener('click', async function () {
-                    messagebox.innerHTML = `<p>You reactivated ${UI.LLMName}.</p><p>Loading...</p>`;
-                    set.del('chloe');
-                    window.location.reload();
-                });
-            } else {
-                UI.text(messagebox, UI.LLMName + "'s loading...");
-                UI.text(messagebox, "It'll be with you in a second.");
-            }
+        let generating = false;
 
-            const closeBtn = UI.button(messagebox, 'Close', 'ui-big-btn');
-            closeBtn.addEventListener('click', async function () {
-                closeCurrentMenu();
-            });
-        } else {
-            const layout = UI.leftRightLayout(menu);
-            const input = UI.create('input', layout.left, 'ui-main-input wide');
-            input.placeholder = "Message";
-            const btn = UI.button(layout.right, 'Send', 'ui-med-btn');
-
-            btn.addEventListener('click', async function () {
+        btn.addEventListener('click', async function () {
+            if (generating === false) {
+                generating = true;
+                btn.Filler.innerText = "Stop";
                 UI.text(messagebox, 'You: ' + input.value);
-                input.value = "";
                 let llmResponseTxt = UI.text(messagebox, `${UI.LLMName}: `);
                 let llmResponse = "";
                 const response = await UI.sendToLLM(messages, input.value, function (token) {
@@ -201,8 +208,22 @@ export async function launch(UI, fs, core) {
                 });
 
                 llmResponseTxt.innerText = `${UI.LLMName}: ` + response;
-            });
-        }
+                generating = false;
+                btn.Filler.innerText = "Send";
+            } else {
+                UI.stopLLMGeneration();
+                generating = false;
+                btn.Filler.innerText = "Send";
+            }
+        });
+
+        const taskrect = taskbar.getBoundingClientRect();
+        menu.style.left = (taskrect.left + (taskrect.width / 2)) - (menu.offsetWidth / 2) + "px";
+        menu.style.bottom = taskrect.height + 8 + "px";
+
+        currentMenu.element = menu;
+        currentMenu.type = "llm";
+        document.addEventListener('mousedown', handleOutsideClick);
     }
 
     async function openControlsMenu() {

@@ -178,10 +178,32 @@ export async function launch(UI, fs, core) {
         sys.socket.on("token", ({ token }) => {
             fs.write('/user/info/token', token);
             console.log('<i> Token received: ' + UI.truncate(token, 7));
-            llmStatus();
+            warnings();
         });
 
         switchToCreation();
+    }
+
+    async function warnings() {
+        setup.innerHTML = '';
+        UI.text(setup, 'Warnings');
+
+        if (sys.OPFSSupported === false) {
+            const compatDiv = UI.create('div', setup, 'message-box-group okay');
+            UI.text(compatDiv, `Warning - Filesystem`, 'bold');
+            UI.text(compatDiv, `Your browser doesn't support OPFS (Origin Private File System). Some features will be missing, and there might be bugs.`);
+        }
+
+        if (!navigator.gpu) {
+            const compatDiv = UI.create('div', setup, 'message-box-group okay');
+            UI.text(compatDiv, `Warning - AI features`, 'bold');
+            UI.text(compatDiv, `Your browser doesn't support WebGPU. AI features can't be used in this browser.`);
+        }
+
+        const doneBtn = UI.button(setup, "Okay", "ui-big-btn");
+        doneBtn.addEventListener('click', () => {
+            llmStatus();
+        });
     }
 
     async function llmStatus() {

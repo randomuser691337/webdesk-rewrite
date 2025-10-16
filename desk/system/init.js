@@ -15,7 +15,8 @@
                     const imageUrl = URL.createObjectURL(blob);
                     document.body.style.backgroundImage = `url('${imageUrl}')`;
                 } else {
-                    console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
+                    console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI. Blob wallpaper...`);
+                    UI.System.generateBlobWallpaper();
                 }
                 const setupflexcontainer = UI.create('div', document.body, 'setup-flex-container');
                 const setup = UI.create('div', setupflexcontainer, 'setup-window');

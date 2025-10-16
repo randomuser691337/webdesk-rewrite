@@ -31,12 +31,6 @@
 const worker = new Worker('./wfs.js');
 var tmp = new Map();
 
-function gen(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
 var currentops = []
 
 fs = {

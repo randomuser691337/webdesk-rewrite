@@ -9,56 +9,77 @@ export async function main(UI, ready, modelName) {
     const textContain = await UI.notif('AI features', 'Loading LLM...');
     const text = textContain.mainDiv;
 
-    const estimateTotalSizeMB = (fetchedMB, progressFraction) => {
-        if (progressFraction <= 0) return null;
-        return fetchedMB / progressFraction;
-    };
+    try {
+        const estimateTotalSizeMB = (fetchedMB, progressFraction) => {
+            if (progressFraction <= 0) return null;
+            return fetchedMB / progressFraction;
+        };
 
-    const initProgressCallback = (progress) => {
-        console.log("Model loading progress:", progress);
+        const initProgressCallback = (progress) => {
+            console.log("Model loading progress:", progress);
 
-        if (progress.progress === 0) {
-            text.innerHTML = "Loading LLM...";
-        } else {
-            const prog = (progress.progress * 100).toString();
-            const fetchedMatch = progress.text.match(/([\d.]+)MB fetched/);
-            let sizeString = "unknown size";
+            if (progress.progress === 0) {
+                text.innerHTML = "Loading LLM...";
+            } else {
+                const prog = (progress.progress * 100).toString();
+                const fetchedMatch = progress.text.match(/([\d.]+)MB fetched/);
+                let sizeString = "unknown size";
 
-            if (fetchedMatch) {
-                const fetchedMB = parseFloat(fetchedMatch[1]);
-                const estimatedMB = estimateTotalSizeMB(fetchedMB, progress.progress);
-                if (estimatedMB) {
-                    const estimatedGB = (estimatedMB / 1024).toFixed(2);
-                    sizeString = `${estimatedGB}GB`;
+                if (fetchedMatch) {
+                    const fetchedMB = parseFloat(fetchedMatch[1]);
+                    const estimatedMB = estimateTotalSizeMB(fetchedMB, progress.progress);
+                    if (estimatedMB) {
+                        const estimatedGB = (estimatedMB / 1024).toFixed(2);
+                        sizeString = `${estimatedGB}GB`;
+                    }
                 }
+
+                text.innerHTML = `Downloading LLM... (${UI.truncate(prog, 2, false).replace('.', '')}%) (Model is ~${sizeString})`;
             }
+        };
 
-            text.innerHTML = `Downloading LLM... (${UI.truncate(prog, 2, false)}%) (Model is ~${sizeString})`;
+        engine = await webllm.CreateMLCEngine(
+            modelName,
+            {
+                initProgressCallback
+            }
+        );
+
+        const config = {
+            temperature: 0.2,
+            top_p: 0.9
+        };
+
+        await engine.resetChat();
+        UI.System.llmRing('waiting');
+        await UI.changeimg(textContain.iconImg, '/system/lib/img/check.svg');
+        text.innerHTML = `AI features loaded!`;
+        setTimeout(function () {
+            textContain.removeNotif();
+        }, 4000);
+        if (ready) {
+            ready();
         }
-    };
-
-    engine = await webllm.CreateMLCEngine(
-        modelName,
-        {
-            initProgressCallback
-        }
-    );
-
-    const config = {
-        temperature: 0.2,
-        top_p: 0.9
-    };
-
-    await engine.resetChat();
-    UI.remove(textContain);
-    UI.System.llmRing('waiting');
-    if (ready) {
-        ready();
+    } catch (error) {
+        console.log(`<!> Failed to load LLM: ` + error);
+        await UI.changeimg(textContain.iconImg, '/system/lib/img/warn.svg');
+        text.innerHTML = "Failed to load LLM.";
+        setTimeout(function () {
+            textContain.removeNotif();
+        }, 4000);
     }
 }
 
 export function listModels() {
     return webllm.prebuiltAppConfig.model_list.map(m => m.model_id);
+}
+
+export function stopGenerating() {
+    console.log(engine);
+    if (engine) {
+        engine.interruptSignal = true;
+        UI.System.llmRing('waiting');
+    }
 }
 
 export async function deactivate() {

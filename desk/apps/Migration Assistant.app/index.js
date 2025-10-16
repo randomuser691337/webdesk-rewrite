@@ -25,13 +25,7 @@ export async function launch(UI, fs, core, undefined, module) {
 }
 
 export async function migratePane(UI, fs, core) {
-    const blob = await fs.read('/system/lib/wallpaper.jpg');
-    if (blob instanceof Blob) {
-        imageUrl = URL.createObjectURL(blob);
-        document.body.style.backgroundImage = `url('${imageUrl}')`;
-    } else {
-        console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
-    }
+    UI.System.generateBlobWallpaper();
     codeToKillTask = function () {
         core2.removeModule(id);
         UI.remove(setupflexcontainer);
