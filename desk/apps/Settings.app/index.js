@@ -160,24 +160,36 @@ export async function launch(UI, fs, core, unused, module) {
             } else if (gpuTest.perfScore < 0.00028) {
                 compatDiv.classList.add('good');
                 UI.text(compatDiv, `Compatibility`, 'bold');
-                UI.text(compatDiv, `Your device can run big LLMs well.`);
-            } else if (gpuTest.perfScore < 0.03) {
+                UI.text(compatDiv, `Your graphics processor can run big LLMs well.`);
+            } else if (gpuTest.perfScore < 0.003) {
                 compatDiv.classList.add('okay');
                 UI.text(compatDiv, `Compatibility`, 'bold');
-                UI.text(compatDiv, `Your device can run the default or mid-sized LLMs fine.`);
+                UI.text(compatDiv, `Your graphics processor can run the default or mid-sized LLMs fine.`);
             } else {
                 compatDiv.classList.add('bad');
                 UI.text(compatDiv, `Compatibility`, 'bold');
-                UI.text(compatDiv, `Your device can't run LLMs. You should disable AI features.`);
+                UI.text(compatDiv, `Your graphics processor can't run LLMs. You should disable AI features.`);
             }
             const group1 = UI.create('div', content, 'box-group');
             const appearbar = UI.leftRightLayout(group1);
             appearbar.left.innerHTML = '<span class="smalltxt">AI features</span>';
-            const enableBtn = UI.button(appearbar.right, 'Enable', 'ui-med-btn');
-            const disableBtn = UI.button(appearbar.right, 'Disable', 'ui-med-btn');
-            disableBtn.addEventListener('click', async function () {
-                if (sys.LLMLoaded !== false) {
-                    const areyousure = UI.create('div', document.body, 'cm');
+            const enableBtn = UI.switch.create(appearbar.right, false);
+
+            if (await set.read('lowend') === 'true') {
+                UI.switch.check(enableBtn);
+            }
+
+            let areyousure;
+
+            enableBtn.addEventListener('click', () => {
+                if (UI.switch.checked(enableBtn) === false) {
+                    if (sys.LLMLoaded === false) {
+                        wd.startLLM();
+                        UI.snack('Re-enabled AI features');
+                    }
+                } else {
+                    UI.remove(areyousure);
+                    areyousure = UI.create('div', win.win, 'cm');
                     UI.text(areyousure, 'Are you sure?', 'bold');
                     UI.text(areyousure, 'WebDesk will reboot if you disable AI features.');
                     const yes = UI.button(areyousure, 'Disable', 'ui-med-btn');
@@ -190,14 +202,6 @@ export async function launch(UI, fs, core, unused, module) {
                     no.addEventListener('click', async function () {
                         UI.remove(areyousure);
                     });
-                } else {
-                    UI.text(areyousure, 'AI features are already turned off.');
-                }
-            });
-
-            enableBtn.addEventListener('click', async function () {
-                if (sys.LLMLoaded === false) {
-                    wd.startLLM();
                 }
             });
 
@@ -254,10 +258,27 @@ export async function launch(UI, fs, core, unused, module) {
                     const models = sys.LLM.listModels();
                     const btn2 = UI.button(menu, 'Default', 'ui-small-btn wide');
                     btn2.addEventListener('click', async function () {
-                        set.del('LLMModel');
-                        await sys.LLM.deactivate();
-                        dropBtn.Filler.innerText = UI.truncate('Qwen2.5-3B-Instruct-q4f32_1-MLC', 25);
-                        await wd.startLLM();
+                        const rebootmsg = UI.create('div', document.body, 'cm');
+                        UI.text(rebootmsg, 'Use the default model? WebDesk will restart.', 'bold');
+                        const match = model.match(/(\d+(?:\.\d+)?)B/i);
+                        const size = match ? parseFloat(match[1]) : 0;
+
+                        UI.text(rebootmsg, `This is a mid-sized model. It can handle most tasks with careful prompting, but low-end graphics processors may struggle.`);
+
+                        UI.text(rebootmsg, `Each model acts differently.`);
+
+                        UI.text(rebootmsg, UI.LLMName + ' will restart and use the new model from now on.');
+
+                        const reboot = UI.button(rebootmsg, 'Restart and use model', 'ui-med-btn');
+                        reboot.addEventListener('click', async function () {
+                            await set.write('LLMModel', 'Qwen2.5-3B-Instruct-q4f32_1-MLC');
+                            window.location.reload();
+                        });
+
+                        const close = UI.button(rebootmsg, `Cancel`, 'ui-med-btn');
+                        close.addEventListener('click', function () {
+                            UI.remove(rebootmsg);
+                        });
                     });
                     models.forEach(function (model) {
                         if (model.toLowerCase().includes("chat") || model.toLowerCase().includes("instruct")) {
@@ -269,11 +290,11 @@ export async function launch(UI, fs, core, unused, module) {
                                 const size = match ? parseFloat(match[1]) : 0;
 
                                 if (size < 1.1) {
-                                    UI.text(rebootmsg, `This model has limited knowledge and might struggle with complex tasks. It runs well on most modern devices.`);
+                                    UI.text(rebootmsg, `This model has limited knowledge and might struggle with complex tasks. It runs well on most graphics processors.`);
                                 } else if (size > 5.1) {
-                                    UI.text(rebootmsg, `THIS MODEL IS HUGE. It'll do nearly everything but requires high-end hardware to run smoothly.`);
+                                    UI.text(rebootmsg, `THIS MODEL IS HUGE. It'll do nearly everything but requires a high-end graphics processor to run smoothly.`);
                                 } else {
-                                    UI.text(rebootmsg, `This is a mid-sized model. It can handle most tasks with careful prompting, but low-end hardware may struggle.`);
+                                    UI.text(rebootmsg, `This is a mid-sized model. It can handle most tasks with careful prompting, but low-end graphics processors may struggle.`);
                                 }
                                 UI.text(rebootmsg, `Each model acts differently.`);
 
@@ -281,7 +302,7 @@ export async function launch(UI, fs, core, unused, module) {
 
                                 const reboot = UI.button(rebootmsg, 'Restart and use model', 'ui-med-btn');
                                 reboot.addEventListener('click', async function () {
-                                    set.write('LLMModel', model);
+                                    await set.write('LLMModel', model);
                                     window.location.reload();
                                 });
 

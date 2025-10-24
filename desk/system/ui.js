@@ -129,7 +129,7 @@ UI = {
                     const rect = e.target.getBoundingClientRect();
                     const x = e.clientX - rect.left;
                     const y = e.clientY - rect.top;
-
+                    e.target.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(var(--ui-accent), 0.4), rgba(var(--ui-accent), 0.25))`;
                 });
             }
         }
@@ -163,10 +163,14 @@ UI = {
             const switchOn = UI.create('div', UISwitch, 'ui-switch-knob');
             if (toggled === true) {
                 UISwitch.classList.remove('ui-switch-disabled');
+                UISwitch.classList.remove('ui-switch-disabled-flag');
                 UISwitch.classList.add('ui-switch-enabled');
+                UISwitch.classList.add('ui-switch-enabled-flag');
             } else {
                 UISwitch.classList.remove('ui-switch-enabled');
+                UISwitch.classList.remove('ui-switch-enabled-flag');
                 UISwitch.classList.add('ui-switch-disabled');
+                UISwitch.classList.add('ui-switch-disabled-flag');
             }
 
             if (disableBuiltInToggle !== true) {
@@ -178,29 +182,42 @@ UI = {
             return UISwitch;
         },
         toggle: function (element) {
-            if (element.classList.contains('ui-switch-enabled')) {
-                element.classList.remove('ui-switch-enabled');
-                element.classList.add('ui-switch-disabled');
-                return false;
-            }
-            else {
-                element.classList.remove('ui-switch-disabled');
-                element.classList.add('ui-switch-enabled');
-                return true;
+            if (element.classList.contains('ui-switch-enabled-flag')) {
+                return this.uncheck(element);
+            } else {
+                return this.check(element);
             }
         },
         check: function (element) {
-            element.classList.remove('ui-switch-disabled');
-            element.classList.add('ui-switch-enabled');
+            // 15px -> 30px -> 15px animation fixed by AI
+            element.classList.remove('ui-switch-disabled-flag');
+            element.classList.add('ui-switch-enabled-flag');
+            Array.from(element.children).forEach((child) => {
+                child.style.width = "30px";
+                setTimeout(function () {
+                    child.style.width = "15px";
+                    element.classList.remove('ui-switch-disabled');
+                    element.classList.add('ui-switch-enabled');
+                }, 100);
+            });
             return true;
         },
         uncheck: function (element) {
-            element.classList.remove('ui-switch-enabled');
-            element.classList.add('ui-switch-disabled');
+            // 15px -> 30px -> 15px animation fixed by AI
+            element.classList.remove('ui-switch-enabled-flag');
+            element.classList.add('ui-switch-disabled-flag');
+            Array.from(element.children).forEach((child) => {
+                child.style.width = "30px";
+                setTimeout(function () {
+                    child.style.width = "15px";
+                    element.classList.remove('ui-switch-enabled');
+                    element.classList.add('ui-switch-disabled');
+                }, 100);
+            });
             return false;
         },
         checked: function (element) {
-            return element.classList.contains('ui-switch-enabled');
+            return element.classList.contains('ui-switch-enabled-flag');
         }
     },
     notif: async function (title, body, icon) {
@@ -249,9 +266,9 @@ UI = {
             return `${hours}:${minutes} ${ampm}`;
         }
     },
-    sendToLLM: async function (messages, userContent, token) {
+    sendToLLM: async function (messages, userContent, token, temp, top_p) {
         try {
-            const result = await sys.LLM.send(messages, userContent, token);
+            const result = await sys.LLM.send(messages, userContent, token, temp, top_p);
             if (result && result.responseMessage) {
                 return result.responseMessage;
             } else {
@@ -480,7 +497,7 @@ UI = {
         }
 
         // minimizeToggle debugged by AI
-        
+
 
         function minimizeToggle() {
             if (winMinimized === true) {
@@ -502,7 +519,7 @@ UI = {
                 const dx = rect.x - winRect.x - winRect.width / 2 + 20;
                 const dy = rect.y - winRect.y - winRect.height;
 
-                win.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+                win.style.transition = 'transform var(--anim-speed-medium) ease, opacity var(--anim-speed-medium) ease';
                 win.style.transformOrigin = 'bottom center';
                 win.style.transform = `translate(${dx}px, ${dy}px) scale(0)`;
                 win.style.opacity = '0.5';
@@ -567,9 +584,19 @@ UI = {
         const menu = this.create('div', document.body, 'right-click-menu');
         menu.style.left = `${event.clientX}px`;
         menu.style.top = `${event.clientY}px`;
-        menu.style.maxHeight = window.innerHeight - event.clientY - 30 + "px";
-        menu.style.maxWidth = window.innerWidth - event.clientX - 30 + "px";
-        console.log(event.clientX);
+        menu.style.width = "140px"; // fuck it
+        // protection
+
+        const rect = menu.getBoundingClientRect();
+        console.log(rect);
+        console.log(document.documentElement.clientWidth);
+        console.log(event.clientX + rect.width);
+        if (document.documentElement.clientWidth < event.clientX + rect.width) {
+            menu.style.right = `4px`;
+            menu.style.left = `auto`;
+        } else {
+            console.log('<i> menu doesnt need repos');
+        }
 
         setTimeout(function () {
             document.addEventListener('click', () => {
@@ -602,6 +629,10 @@ UI = {
         SystemMenus: {
             taskbar: undefined,
             menubar: undefined,
+        },
+        launchApp: async function (path) {
+            const code = await fs.read(path);
+
         },
         darkMode: function () {
             UI.changevar('ui-primary', '40, 40, 40');
@@ -681,7 +712,7 @@ UI = {
 
             const colors = [];
             function selectRandomColor() {
-                const predefinedColors = [0, 30, 60, 120, 240, 270, 300];
+                const predefinedColors = [0, 30, 60, 210, 240, 270, 300];
                 let hue;
                 do {
                 hue = predefinedColors[Math.floor(Math.random() * predefinedColors.length)];
@@ -761,6 +792,28 @@ UI = {
             };
 
             worker.postMessage({ width, height, textColor, accentColor });
+        },
+        fullscreenToggle: function (element) {
+            // 100% AI lol
+            if (!document.fullscreenElement) {
+                // If not in fullscreen, request it
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) { // Safari
+                    element.webkitRequestFullscreen();
+                } else if (element.msRequestFullscreen) { // IE11
+                    element.msRequestFullscreen();
+                }
+            } else {
+                // If in fullscreen, exit it
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { // Safari
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) { // IE11
+                    document.msExitFullscreen();
+                }
+            }
         },
         GPUTest: function () {
             // ENTIRELY generated by ChatGPT

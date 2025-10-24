@@ -23,13 +23,72 @@ export async function launch(UI, fs, core) {
     UI.System.SystemMenus.notifArea = UI.create('div', document.body, 'notif-pane');
     UI.System.SystemMenus.notifArea.style.top = menubar.offsetHeight + 18 + "px";
 
-    const contBTN = UI.button(rightMenuBar, 'Controls', 'ui-menubar-btn');
+    const contBTN = UI.button(rightMenuBar, 'Controls', 'menuBar-btn');
+
+    contBTN.addEventListener('mousedown', function () {
+        const rect = contBTN.getBoundingClientRect();
+        const event = {
+            clientX: Math.floor(rect.left),
+            clientY: Math.floor(rect.bottom) + 6
+        };
+
+        const menu = UI.rightClickMenu(event);
+        menu.classList.add('menuBar-Menu');
+
+        menu.style.width = "180px";
+
+        // Uploader code
+        const input = UI.create('input', menu, 'hide');
+        input.type = "file";
+        input.addEventListener("change", async function () {
+            for (const file of this.files) {
+                const path = `/uploads/${file.name}`;
+                const isImage = file.type.startsWith("image");
+                const content = isImage ? file : await file.text();
+
+                try {
+                    await fs.write(path, content, isImage ? "blob" : "text");
+                    const blob = await fs.read(path);
+                    if (isImage && blob instanceof Blob) {
+                        const img = document.createElement("img");
+                        img.src = URL.createObjectURL(blob);
+                        img.style.maxWidth = "200px";
+                        document.body.appendChild(img);
+                    } else {
+                        console.log(`Text file contents of ${file.name}:`, blob);
+                    }
+                } catch (err) {
+                    console.error(`Failed to process ${file.name}:`, err);
+                }
+            }
+        });
+        /* const softBtn = UI.button(menu, 'Reboot without re-initializing', 'ui-med-btn wide');
+        softBtn.addEventListener('click', () => {
+            document.body.innerHTML = '';
+            core.loadJS('/system/init.js');
+        }); */
+
+
+        // Copilot fixed this array's fuckery for me
+        const menuBarItems2 = [
+            { name: "Reload", action: function () { window.location.reload(); } },
+            { name: "Upload File", action: function () { input.click(); } },
+            { name: "Fullscreen Toggle", action: function () { UI.System.fullscreenToggle(document); } }
+        ];
+
+        menuBarItems2.forEach(function (child) {
+            const btn2 = UI.button(menu, child.name, 'ui-menubar-btn wide');
+            btn2.addEventListener('click', child.action);
+            btn2.addEventListener('mouseup', child.action);
+        });
+
+        menu.style.width = "140px";
+    });
+
     if (sys.LLMLoaded === "unsupported") {
         llmBTN.style.display = "none";
     }
 
-    leftMenuBar.style.height = "16px";
-    rightMenuBar.style.height = "16px";
     const webdeskButton = UI.create('button', leftMenuBar, 'webdesk-button');
 
     webdeskButton.addEventListener('mousedown', function () {
@@ -80,6 +139,9 @@ export async function launch(UI, fs, core) {
             !contBTN.contains(e.target)
         ) {
             closeCurrentMenu();
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -162,9 +224,23 @@ export async function launch(UI, fs, core) {
             role: "system"
         });
 
+        let flagCounter = 0;
+        async function dontChoke(text) {
+            const start = Math.ceil(text.split(/\s+/).length * 1.3);
+            let textFinal;
+            if (start > 2000) {
+                textFinal = UI.truncate(text, 3400);
+                flagCounter++;
+            } else {
+                textFinal = text;
+            }
+            return textFinal;
+        }
+
         try {
+            const cont1 = await dontChoke(`I have a window opened, use it's contents to help me. \n Title: ${UI.focusedWindow.title}\nContent:\n${UI.focusedWindow.content.outerHTML}`);
             messages.push({
-                content: `I have a window opened, use it's contents to help me. \n Title: ${UI.focusedWindow.title}\nContent:\n${UI.focusedWindow.content.outerHTML}`,
+                content: cont1,
                 role: "user"
             });
         } catch (error) {
@@ -172,8 +248,9 @@ export async function launch(UI, fs, core) {
         }
 
         try {
+            const cont2 = await dontChoke(`I have a second window opened too, use it's contents to help me. \n Title: ${UI.previousFocusedWindow.title}\nContent:\n${UI.previousFocusedWindow.content.outerHTML}`);
             messages.push({
-                content: `I have a second window opened too, use it's contents to help me. \n Title: ${UI.previousFocusedWindow.title}\nContent:\n${UI.previousFocusedWindow.content.outerHTML}`,
+                content: cont2,
                 role: "user"
             });
         } catch (error) {
@@ -185,37 +262,103 @@ export async function launch(UI, fs, core) {
         const messagebox = UI.create('div', menu);
         messagebox.style.height = "400px";
         messagebox.style.overflow = "auto";
-
-        UI.text(messagebox, `${UI.LLMName} may make mistakes. Don't trust it for sensitive topics.`, 'smalltxt');
-
-        const layout = UI.leftRightLayout(menu);
-        const input = UI.create('input', layout.left, 'ui-main-input wide');
-        input.placeholder = `Ask ${UI.LLMName} anything...`;
-        const btn = UI.button(layout.right, 'Send', 'ui-med-btn');
-
         let generating = false;
 
-        btn.addEventListener('click', async function () {
-            if (generating === false) {
-                generating = true;
-                btn.Filler.innerText = "Stop";
-                UI.text(messagebox, 'You: ' + input.value);
-                let llmResponseTxt = UI.text(messagebox, `${UI.LLMName}: `);
-                let llmResponse = "";
-                const response = await UI.sendToLLM(messages, input.value, function (token) {
-                    llmResponse += token;
-                    llmResponseTxt.innerText = `${UI.LLMName}: ` + llmResponse;
-                });
+        async function searchMode() {
+            UI.text(messagebox, "Searching the web...");
+            const searchMsg = [{
+                content: `You are a research LLM. Your job is to create a summary of the links provided.
+                
+            Use:
+            
+            [getWebsiteText](url)
+            
+            This will retrieve the text contents of the webpage at the given URL.
+            
+            Once you've gone through each link, summarize the information provided in the user paragraphs.`, role: "system"
+            }, { content: `Links: test1, test2` }]
+            const response = await UI.sendToLLM(messages, input.value, function (token) {
+                messagebox.scrollTop = messagebox.scrollHeight;
+                llmResponse += token;
+                llmResponseTxt.innerText = `${UI.LLMName}: ` + llmResponse;
+            });
 
-                llmResponseTxt.innerText = `${UI.LLMName}: ` + response;
-                generating = false;
-                btn.Filler.innerText = "Send";
-            } else {
-                UI.stopLLMGeneration();
-                generating = false;
-                btn.Filler.innerText = "Send";
+            // cant bother connecting it to the internet... YET
+        }
+
+        function loadUI() {
+            UI.text(messagebox, `${UI.LLMName} may make mistakes. Don't trust it for sensitive topics.`, 'smalltxt');
+            if (flagCounter > 0) {
+                UI.text(messagebox, `Window contents were too big, and had to be truncated. Context may be missing.`, 'smalltxt');
             }
-        });
+            const layout = UI.leftRightLayout(menu);
+            const input = UI.create('input', layout.left, 'ui-main-input wide');
+            input.placeholder = `Ask ${UI.LLMName} anything...`;
+            const btn = UI.button(layout.right, 'Send', 'ui-med-btn');
+
+            let firstMsg = true;
+
+            btn.addEventListener('click', async function () {
+                if (generating === false) {
+                    generating = true;
+                    btn.Filler.innerText = "Stop";
+                    UI.text(messagebox, 'You: ' + input.value);
+                    input.value = "";
+                    let llmResponseTxt = UI.text(messagebox, `${UI.LLMName}: `);
+                    let llmResponse = "";
+                    if (firstMsg === true) {
+                        llmResponseTxt.innerText = `The first message may take longer to generate. Please wait...`;
+                        firstMsg = false;
+                    }
+
+                    let timeSinceLastToken = Date.now();
+                    let tripCounter = 0;
+                    let alreadyNotified = false;
+
+                    const response = await UI.sendToLLM(messages, input.value, function (token) {
+                        const now = Date.now();
+                        if ((now - timeSinceLastToken) > 10000) {
+                            tripCounter++;
+                        } else {
+                            tripCounter = 0;
+                        }
+                        timeSinceLastToken = now;
+
+                        if (tripCounter > 3 || tripCounter === 3 && alreadyNotified === false) {
+                            alreadyNotified = true;
+                            UI.text(menu, `This model isn't performing well. Consider using a smaller one in Settings.`);
+                        }
+                        messagebox.scrollTop = messagebox.scrollHeight;
+                        llmResponse += token;
+                        llmResponseTxt.innerText = `${UI.LLMName}: ` + llmResponse;
+                    });
+
+                    llmResponseTxt.innerText = `${UI.LLMName}: ` + response;
+                    generating = false;
+                    btn.Filler.innerText = "Send";
+                } else {
+                    UI.stopLLMGeneration();
+                    generating = false;
+                    btn.Filler.innerText = "Send";
+                }
+            });
+        }
+
+        if (sys.LLMLoaded === true) {
+            loadUI();
+        } else if (sys.LLMLoaded === "loading") {
+            const txt = UI.text(menu, `AI features are loading...`);
+            const check = setInterval(function () {
+                if (sys.LLMLoaded === true) {
+                    clearInterval(check);
+                    txt.remove();
+                    loadUI();
+                }
+            }, 200);
+        } else {
+            UI.text(menu, `AI features are disabled.`);
+            UI.text(menu, `You can re-enable them in Settings.`);
+        }
 
         const taskrect = taskbar.getBoundingClientRect();
         menu.style.left = (taskrect.left + (taskrect.width / 2)) - (menu.offsetWidth / 2) + "px";
@@ -223,56 +366,14 @@ export async function launch(UI, fs, core) {
 
         currentMenu.element = menu;
         currentMenu.type = "llm";
-        document.addEventListener('mousedown', handleOutsideClick);
-    }
-
-    async function openControlsMenu() {
-        closeCurrentMenu();
-
-        const menu = UI.create('div', document.body, 'taskbar-menu');
-        const input = UI.create('input', menu, 'hide');
-        input.type = "file";
-        input.addEventListener("change", async function () {
-            for (const file of this.files) {
-                const path = `/uploads/${file.name}`;
-                const isImage = file.type.startsWith("image");
-                const content = isImage ? file : await file.text();
-
-                try {
-                    await fs.write(path, content, isImage ? "blob" : "text");
-                    const blob = await fs.read(path);
-                    if (isImage && blob instanceof Blob) {
-                        const img = document.createElement("img");
-                        img.src = URL.createObjectURL(blob);
-                        img.style.maxWidth = "200px";
-                        document.body.appendChild(img);
-                    } else {
-                        console.log(`Text file contents of ${file.name}:`, blob);
-                    }
-                } catch (err) {
-                    console.error(`Failed to process ${file.name}:`, err);
-                }
+        document.addEventListener('mousedown', function (event) {
+            const closed = handleOutsideClick(event);
+            if (closed === true && generating === true) {
+                UI.stopLLMGeneration();
+                generating = false;
+                btn.Filler.innerText = "Send";
             }
         });
-
-        const uploadBtn = UI.button(menu, 'Upload File', 'ui-big-btn wide');
-        uploadBtn.addEventListener('click', () => {
-            input.click();
-        });
-
-        const softBtn = UI.button(menu, 'Reboot without re-initializing', 'ui-big-btn wide');
-        softBtn.addEventListener('click', () => {
-            document.body.innerHTML = '';
-            core.loadJS('/system/init.js');
-        });
-
-        const taskrect = menubar.getBoundingClientRect();
-        menu.style.right = "4px";
-        menu.style.top = taskrect.height + "px";
-
-        currentMenu.element = menu;
-        currentMenu.type = "controls";
-        document.addEventListener('mousedown', handleOutsideClick);
     }
 
     appBTN.addEventListener('click', async () => {
@@ -288,14 +389,6 @@ export async function launch(UI, fs, core) {
             closeCurrentMenu();
         } else {
             await openLLMMenu();
-        }
-    });
-
-    contBTN.addEventListener('click', async () => {
-        if (currentMenu.type === "controls") {
-            closeCurrentMenu();
-        } else {
-            await openControlsMenu();
         }
     });
 

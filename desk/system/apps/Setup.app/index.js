@@ -14,6 +14,7 @@ export async function launch(UI, fs, core) {
         document.body.style.backgroundImage = `url('${imageUrl}')`;
     } else {
         console.log(`<!> /system/lib/wallpaper.jpg is not an image decodable by WebDesk's UI.`);
+        UI.System.generateBlobWallpaper();
     }
     const setupflexcontainer = UI.create('div', document.body, 'setup-flex-container');
     const setup = UI.create('div', setupflexcontainer, 'setup-window');
@@ -263,6 +264,8 @@ export async function launch(UI, fs, core) {
             }, 300);
         }, 600);
         errorBar.right.innerText = "Error/Problem";
+
+        UI.text(setup, `*Ability to use AI features depends on your graphics performance.`, 'smalltxt');
 
         const doneBtn = UI.button(setup, "Got it", "ui-big-btn");
         const deactivateAIBtn = UI.button(setup, "Deactivate AI features", "ui-big-btn");

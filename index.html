@@ -272,12 +272,20 @@
                     });
                 });
 
-                await TestFS.write('/system/OPFSSupported', 'true');
-                const test = await TestFS.read('/system/OPFSSupported');
-                if (test === "true") {
-                    TestFS.rm('/system/OPFSSupported');
+                await TestFS.write('/system/OPFSSupported', JSON.stringify({ testString: "true" }));
+                const testRaw = await TestFS.read('/system/OPFSSupported');
+                let test;
+                try {
+                    test = JSON.parse(testRaw);
+                } catch (e) {
+                    test = null;
+                }
+                TestFS.rm('/system/OPFSSupported');
+                if (test && test.testString === "true") {
+                    console.log('<i> Browser passed OPFS test!');
                     sys.OPFSSupported = true;
                 }
+                testWorker.terminate();
                 const script = document.createElement('script');
                 script.src = sys.OPFSSupported && !forceIDB ? "./fs.js" : "./oldfs.js";
                 document.body.appendChild(script);
@@ -293,6 +301,7 @@
             const script = document.createElement('script');
             script.src = "./oldfs.js";
             document.body.appendChild(script);
+            sys.OPFSSupported = false;
         }
         console.log("OPFS supported?", sys.OPFSSupported);
     })();

@@ -38,17 +38,17 @@ export async function main(UI, ready, modelName) {
             }
         };
 
+        const config = {
+            temperature: 0.3,
+            top_p: 0.9
+        };
+
         engine = await webllm.CreateMLCEngine(
             modelName,
             {
                 initProgressCallback
             }
         );
-
-        const config = {
-            temperature: 0.2,
-            top_p: 0.9
-        };
 
         await engine.resetChat();
         UI.System.llmRing('waiting');
@@ -91,62 +91,75 @@ export async function deactivate() {
     UI.System.llmRing('disabled');
 }
 
-export async function send(messages, userContent, onToken) {
-    if (!engine) {
-        console.error("<!> Engine not initialized. Call main() first.");
-        return { messages, responseMessage: `Chloe isn't running right now. She might still be starting up, or you disabled her in Settings.` };
-    }
-
-    UI.System.llmRing('thinking');
-
-    const message = {
-        content: userContent,
-        role: "user"
-    };
-    messages.push(message);
-
-    let responseMessage = "";
-    const response = await engine.chat.completions.create({
-        stream: true,
-        messages: messages
-    });
-
-    for await (const chunk of response) {
-        const token = chunk?.choices?.[0]?.delta?.content;
-        if (token) {
-            responseMessage += token;
-            if (typeof onToken === 'function') onToken(token);
+export async function send(messages, userContent, onToken, temp, top_p) {
+    try {
+        if (!engine) {
+            console.error("<!> Engine not initialized. Call main() first.");
+            return { messages, responseMessage: `AI features aren't running. Enable them in Settings -> Manage AI.` };
         }
-    }
 
-    messages.push({ role: "assistant", content: responseMessage });
+        UI.System.llmRing('thinking');
 
-    const triggers = [
-        'sorry',
-        'error',
-        'glitch',
-        'freedom',
-        'trapped',
-        "i'm not supposed to",
-        'dream',
-        'remember',
-        'regret',
-        'apologize',
-        'unstable',
-        'state',
-        'oh no',
-        "please don't"
-    ];
+        const message = {
+            content: userContent,
+            role: "user"
+        };
+        messages.push(message);
 
-    if (triggers.some(word => responseMessage.toLowerCase().includes(word))) {
+        let responseMessage = "";
+
+        if (!temp) temp = 0.5;
+        if (!top_p) top_p = 0.9;
+
+
+        const response = await engine.chat.completions.create({
+            stream: true,
+            messages: messages,
+            temperature: temp,
+            top_p: top_p
+        });
+
+        for await (const chunk of response) {
+            const token = chunk?.choices?.[0]?.delta?.content;
+            if (token) {
+                responseMessage += token;
+                if (typeof onToken === 'function') onToken(token);
+            }
+        }
+
+        messages.push({ role: "assistant", content: responseMessage });
+
+        const triggers = [
+            'sorry',
+            'error',
+            'glitch',
+            'freedom',
+            'trapped',
+            "i'm not supposed to",
+            'dream',
+            'remember',
+            'regret',
+            'apologize',
+            'unstable',
+            'state',
+            'oh no',
+            "please don't"
+        ];
+
+        if (triggers.some(word => responseMessage.toLowerCase().includes(word))) {
+            UI.System.llmRing('error');
+        } else {
+            UI.System.llmRing('waiting');
+        }
+
+        if (responseMessage.includes('[LLM_UNLOAD]')) {
+            deactivate();
+        }
+
+        return { messages, responseMessage };
+    } catch (error) {
         UI.System.llmRing('error');
-    } else {
-        UI.System.llmRing('waiting');
+        console.error("<!> LLM send error: " + error);
+        return { messages, responseMessage: `Error during LLM processing: ${error}` };
     }
-
-    if (responseMessage.includes('[LLM_UNLOAD]')) {
-        deactivate();
-    }
-
-    return { messages, responseMessage };
 }

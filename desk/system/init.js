@@ -130,6 +130,10 @@ async function startsockets() {
                 UI.snack(data);
             });
 
+            sys.socket.on("umsg", (data) => {
+                UI.snack(data);
+            });
+
             sys.socket.on("error", (data) => {
                 if (data == "No token provided" && sys.setupd === false) {
                     console.log(`<!> Quiet error: ` + data);

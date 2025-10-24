@@ -127,6 +127,7 @@ export async function launch(UI, fs, core, unused, module) {
             let contextMenu;
 
             button.addEventListener('contextmenu', function (event) {
+                let onehundredpercentexpendable = false;
                 event.preventDefault();
                 UI.remove(contextMenu);
                 contextMenu = UI.rightClickMenu(event);
@@ -141,7 +142,9 @@ export async function launch(UI, fs, core, unused, module) {
                     contextMenu.remove();
                 })
                 const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn wide');
-                deleteButton.onclick = async () => {
+                function deleteButtonMenu() {
+                    if (onehundredpercentexpendable === true) return;
+                    onehundredpercentexpendable = true;
                     contextMenu.remove();
                     const div = UI.create('div', document.body, 'cm');
                     UI.text(div, `Delete ${file.name}?`, 'bold');
@@ -161,10 +164,17 @@ export async function launch(UI, fs, core, unused, module) {
                     noBtn.onclick = () => {
                         UI.remove(div);
                     };
-                };
+                }
+
+                deleteButton.addEventListener('click', deleteButtonMenu);
+                deleteButton.addEventListener('mouseup', function (event) {
+                    deleteButtonMenu();
+                });
 
                 const renameButton = UI.button(contextMenu, 'Rename', 'ui-small-btn wide');
-                renameButton.onclick = async () => {
+                function renameButtonMenu() {
+                    if (onehundredpercentexpendable === true) return;
+                    onehundredpercentexpendable = true;
                     contextMenu.remove();
                     const div = UI.create('div', document.body, 'cm');
                     UI.text(div, `Delete ${file.name}?`, 'bold');
@@ -184,13 +194,17 @@ export async function launch(UI, fs, core, unused, module) {
                     noBtn.onclick = () => {
                         UI.remove(div);
                     };
-                };
+                }
+                renameButton.addEventListener('click', deleteButtonMenu);
+                renameButton.addEventListener('mouseup', function (event) {
+                    renameButtonMenu();
+                });
             });
         });
     }
 
     document.addEventListener('keydown', async (e) => {
-        if ((e.shiftKey && e.ctrlKey && e.key === 'n') && UI.focusedWindow === win.win) {
+        if ((e.shiftKey && e.ctrlKey && e.key === 'n') && UI.focusedWindow === win) {
             const win2 = await launch(UI, fs, core);
             win2.window.win.style.left = (win.win.offsetLeft + 20) + "px";
             win2.window.win.style.top = (win.win.offsetTop + 20) + "px";
