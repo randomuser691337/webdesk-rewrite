@@ -19,6 +19,10 @@ export async function launch(UI, fs, core) {
     const contLLM = UI.create('div', llmBTN, 'waiting');
     const ring = UI.create('div', contLLM, 'ring');
 
+    if (await set.read('chloe', 'deactivated')) {
+        llmBTN.style.display = "none";
+    }
+
     UI.System.SystemMenus.taskbarWindows = UI.create('div', left);
     UI.System.SystemMenus.notifArea = UI.create('div', document.body, 'notif-pane');
     UI.System.SystemMenus.notifArea.style.top = menubar.offsetHeight + 18 + "px";

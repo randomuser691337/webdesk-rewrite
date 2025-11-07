@@ -107,10 +107,59 @@ export async function launch(UI, fs, core) {
                         });
                     });
                 } else {
-                    logIn();
+                    const params = new URLSearchParams(window.location.search);
+                    const provisionUser = params.get('provision');
+                    if (provisionUser) {
+                        provision();
+                    } else {
+                        logIn();
+                    }
                 }
             }, 1000);
         };
+    }
+
+    async function provision() {
+        // Copilot generated pretty much all of this automatically
+        setup.innerHTML = '';
+        const params = new URLSearchParams(window.location.search);
+        const provisionUser = params.get('provision');
+        UI.text(setup, "Automatic Provision", "big-text");
+        UI.text(setup, `Welcome, ${provisionUser}. Set a password to continue.`);
+        const password = UI.input(setup, "Password", "ui-main-input wide", "password");
+        password.type = "password";
+        const provisionBtn = UI.button(setup, "Set password and continue", "ui-big-btn");
+        provisionBtn.addEventListener('click', () => {
+            if (password && provisionUser) {    
+                sys.socket.emit("newacc", { user: provisionUser, pass: password.value });
+            } else {
+                wm.snack("Please enter a password.");
+            }
+        });
+        const cancel = UI.button(setup, "Don't provision", "ui-big-btn");
+        cancel.addEventListener('click', () => {
+            logIn();
+        });
+        sys.socket.on("logininstead", () => {
+            const menu = UI.create('div', setup, 'cm');
+            UI.text(menu, "Welcome back! Log in as " + provisionUser + "?");
+
+            const noBtn = UI.button(menu, "Close", "ui-big-btn");
+            noBtn.addEventListener('click', () => {
+                UI.remove(menu);
+            });
+
+            const yesBtn = UI.button(menu, "Log in", "ui-big-btn");
+            yesBtn.addEventListener('click', () => {
+                sys.socket.emit("signin", { user: provisionUser, pass: password.value });
+                UI.remove(menu);
+            });
+        });
+        sys.socket.on("token", ({ token }) => {
+            fs.write('/user/info/token', token);
+            console.log('<i> Token received: ' + UI.truncate(token, 7));
+            warnings();
+        });
     }
 
     async function logIn() {
@@ -162,7 +211,7 @@ export async function launch(UI, fs, core) {
 
         sys.socket.on("logininstead", () => {
             const menu = UI.create('div', setup, 'cm');
-            UI.text(menu, "You already have an account! Log in as " + username.value + "?");
+            UI.text(menu, "Welcome back! Log in as " + username.value + "?");
 
             const noBtn = UI.button(menu, "Close", "ui-big-btn");
             noBtn.addEventListener('click', () => {

@@ -356,12 +356,12 @@ input,
     transition: 0.04s ease-in-out;
     padding: 0px;
     overflow: hidden;
-    border: 1px solid rgba(var(--ui-accent), 0.5);
+    border: 1px solid rgba(var(--ui-accent), 0.4);
 }
 
 .ui-med-btn:active {
     background-color: rgba(var(--ui-secondary), 1.0);
-    border: 1px solid rgba(var(--ui-accent), 0.55);
+    border: 1px solid rgba(var(--ui-accent), 0.5);
 }
 
 .ui-med-btn-filler {

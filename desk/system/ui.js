@@ -96,7 +96,7 @@ UI = {
         if (btn.Filler) {
             const b = btn.Filler;
             if (sys.lowgfxMode === true) {
-                b.style.transition = "0.04s ease-in-out";
+                b.style.transition = "0.03s ease-in-out";
                 b.onmouseenter = (e) => {
                     e.target.style.background = "rgba(var(--ui-accent), 0.25)";
                 };
@@ -120,8 +120,8 @@ UI = {
                     const accent = 'rgba(var(--ui-accent),';
                     const bg =
                         e.buttons === 1
-                            ? `radial-gradient(circle at ${x}px ${y}px, ${accent}0.4), ${accent}0.2)`
-                            : `radial-gradient(circle at ${x}px ${y}px, ${accent}0.3), ${accent}0.2)`;
+                            ? `radial-gradient(circle at ${x}px ${y}px, ${accent}0.3), ${accent}0.2)`
+                            : `radial-gradient(circle at ${x}px ${y}px, ${accent}0.25), ${accent}0.2)`;
                     e.target.style.background = bg;
                 });
 
@@ -129,7 +129,7 @@ UI = {
                     const rect = e.target.getBoundingClientRect();
                     const x = e.clientX - rect.left;
                     const y = e.clientY - rect.top;
-                    e.target.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(var(--ui-accent), 0.4), rgba(var(--ui-accent), 0.25))`;
+                    e.target.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(var(--ui-accent), 0.3), rgba(var(--ui-accent), 0.2))`;
                 });
             }
         }
@@ -143,7 +143,7 @@ UI = {
             btn.style.setProperty("transform", "scale(1.0)", "important");
             const el = UI.create('span', elappend)
             el.innerText = ">";
-            el.style = "display: inline-block; transform: rotate(90deg); margin-left: 4px;";
+            el.style = "display: inline-block; transform: rotate(90deg); margin-left: 4px; pointer-events: none;";
         };
 
         return btn;
@@ -293,6 +293,37 @@ UI = {
         txt.textContent = text;
         return txt;
     },
+    menu: function (btn, items) {
+        function trigger() {
+            const rect = btn.getBoundingClientRect();
+            const event = {
+                clientX: Math.floor(rect.left),
+                clientY: Math.floor(rect.bottom)
+            };
+
+            const menu = UI.rightClickMenu(event);
+            menu.classList.add('right-click-menu');
+            menu.style.width = `${Math.floor(rect.width) - 10}px`;
+            items.forEach(function (child) {
+                const btn2 = UI.button(menu, child.name, 'ui-small-btn wide');
+                let alreadyFired = false;
+                btn2.addEventListener('click', function () {
+                    if (alreadyFired === false) {
+                        child.action();
+                        alreadyFired = true;
+                    }
+                });
+                btn2.addEventListener('mouseup', function () {
+                    if (alreadyFired === false) {
+                        child.action();
+                        alreadyFired = true;
+                    }
+                });
+            });
+        }
+
+        btn.addEventListener('mousedown', trigger);
+    },
     window: function (title, module, menuBarItems, icon) {
         const win = this.create("div", document.body, "window");
         const header = this.create("div", win, "window-header window-draggable");
@@ -434,7 +465,6 @@ UI = {
                 if (menuBarItems) {
                     menuBarItems.forEach(function (menuBarItem) {
                         const btn = UI.button(UI.System.SystemMenus.MenuBarActions, menuBarItem.title, 'med menuBar-btn');
-
                         function trigger() {
                             const rect = btn.getBoundingClientRect();
                             const event = {
@@ -447,8 +477,19 @@ UI = {
                             menu.style.width = `${Math.floor(rect.width) - 10}px`;
                             menuBarItem.children.forEach(function (child) {
                                 const btn2 = UI.button(menu, child.name, 'ui-small-btn wide');
-                                btn2.addEventListener('click', child.action);
-                                btn2.addEventListener('mouseup', child.action);
+                                let alreadyFired = false;
+                                btn2.addEventListener('click', function () {
+                                    if (alreadyFired === false) {
+                                        child.action();
+                                        alreadyFired = true;
+                                    }
+                                });
+                                btn2.addEventListener('mouseup', function () {
+                                    if (alreadyFired === false) {
+                                        child.action();
+                                        alreadyFired = true;
+                                    }
+                                });
                             });
                         }
 
@@ -609,8 +650,8 @@ UI = {
     line: function (parent) {
         UI.create('div', parent, 'group-line');
     },
-    leftRightLayout: function (parent) {
-        const container = this.create('div', parent, 'flexbox');
+    leftRightLayout: function (parent, classList) {
+        const container = this.create('div', parent, `flexbox ${classList}`);
         const left = this.create('div', container, 'flexbox-left');
         const right = this.create('div', container, 'flexbox-right');
         return { left, right };
@@ -712,7 +753,7 @@ UI = {
 
             const colors = [];
             function selectRandomColor() {
-                const predefinedColors = [0, 30, 60, 210, 240, 270, 300];
+                const predefinedColors = [0, 30, 200, 240, 270, 300];
                 let hue;
                 do {
                 hue = predefinedColors[Math.floor(Math.random() * predefinedColors.length)];
@@ -720,10 +761,10 @@ UI = {
                 return hue;
             }
 
-            while (colors.length < 5) {
+            while (colors.length < 6) {
                 const hue = selectRandomColor();
                 const sat = 100;
-                const light = textColor === "#fff" ? 35 : 85;
+                const light = textColor === "#fff" ? 50 : 60;
                 colors.push(\`hsl(\${hue},\${sat}%,\${light}%)\`);
             }
 

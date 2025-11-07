@@ -1,5 +1,5 @@
 var codeToKillTask = function () {
-    console.log(`<i> No windows were opened! I don't even have access to my own module! Fuck off!`);
+    console.log(`<i> No windows were opened! I don't even have access to my own module!`);
     return false;
 };
 export var name = "Files";
@@ -39,7 +39,8 @@ export async function launch(UI, fs, core, unused, module) {
     });
 
     const container = UI.create('div', win.content, 'window-split-content');
-    const crumbs = UI.create('div', container, 'window-draggable');
+    const leftright = UI.leftRightLayout(container, 'window-draggable');
+    const crumbs = UI.create('div', leftright.left, 'window-draggable');
     const filelist = UI.create('div', container);
     filelist.style.paddingTop = "4px";
     container.style.display = "flex";
@@ -57,6 +58,13 @@ export async function launch(UI, fs, core, unused, module) {
     sidebarcontent.style.flex = "1";
     sidebarcontent.style.overflow = "auto";
 
+    const addBtn = UI.button(leftright.right, '+', 'ui-small-btn');
+    let actions = [{
+        name: "New folder", action: function () {
+            console.log("<!> no folder actions yet");
+        }
+    }];
+    UI.menu(addBtn, actions);
     let dir;
     async function nav(path) {
         dir = await fs.ls(path);

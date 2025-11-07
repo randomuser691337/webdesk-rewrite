@@ -175,18 +175,29 @@ export async function launch(UI, fs, core, unused, module) {
             appearbar.left.innerHTML = '<span class="smalltxt">AI features</span>';
             const enableBtn = UI.switch.create(appearbar.right, false);
 
-            if (await set.read('lowend') === 'true') {
+            if (await set.read('chloe') !== 'deactivated') {
                 UI.switch.check(enableBtn);
             }
 
             let areyousure;
 
             enableBtn.addEventListener('click', () => {
-                if (UI.switch.checked(enableBtn) === false) {
-                    if (sys.LLMLoaded === false) {
-                        wd.startLLM();
-                        UI.snack('Re-enabled AI features');
-                    }
+                if (UI.switch.checked(enableBtn) === true) {
+                    UI.remove(areyousure);
+                    areyousure = UI.create('div', win.win, 'cm');
+                    UI.text(areyousure, 'Are you sure?', 'bold');
+                    UI.text(areyousure, 'WebDesk will reboot if you enable AI features.');
+                    const yes = UI.button(areyousure, 'Enable', 'ui-med-btn');
+                    yes.addEventListener('click', async function () {
+                        await set.del('chloe');
+                        window.location.reload();
+                    });
+
+                    const no = UI.button(areyousure, 'Cancel', 'ui-med-btn');
+                    no.addEventListener('click', async function () {
+                        UI.switch.uncheck(enableBtn);
+                        UI.remove(areyousure);
+                    });
                 } else {
                     UI.remove(areyousure);
                     areyousure = UI.create('div', win.win, 'cm');
@@ -194,12 +205,13 @@ export async function launch(UI, fs, core, unused, module) {
                     UI.text(areyousure, 'WebDesk will reboot if you disable AI features.');
                     const yes = UI.button(areyousure, 'Disable', 'ui-med-btn');
                     yes.addEventListener('click', async function () {
-                        set.write('chloe', 'deactivated');
+                        await set.write('chloe', 'deactivated');
                         window.location.reload();
                     });
 
                     const no = UI.button(areyousure, 'Cancel', 'ui-med-btn');
                     no.addEventListener('click', async function () {
+                        UI.switch.check(enableBtn);
                         UI.remove(areyousure);
                     });
                 }
@@ -242,7 +254,7 @@ export async function launch(UI, fs, core, unused, module) {
             dropBtn.dropBtnDecor();
 
             let menu;
-            dropBtn.addEventListener('click', async function () {
+            dropBtn.addEventListener('mousedown', async function () {
                 const rect = dropBtn.getBoundingClientRect();
                 const event = {
                     clientX: Math.floor(rect.left),
@@ -257,7 +269,10 @@ export async function launch(UI, fs, core, unused, module) {
                     menu.style.height = "350px";
                     const models = sys.LLM.listModels();
                     const btn2 = UI.button(menu, 'Default', 'ui-small-btn wide');
-                    btn2.addEventListener('click', async function () {
+
+                    let alreadyTriggered = false;
+
+                    function defaultLLM() {
                         const rebootmsg = UI.create('div', document.body, 'cm');
                         UI.text(rebootmsg, 'Use the default model? WebDesk will restart.', 'bold');
                         const match = model.match(/(\d+(?:\.\d+)?)B/i);
@@ -279,7 +294,22 @@ export async function launch(UI, fs, core, unused, module) {
                         close.addEventListener('click', function () {
                             UI.remove(rebootmsg);
                         });
+                    }
+
+                    btn2.addEventListener('click', async function () {
+                        if (alreadyTriggered) {
+                            defaultLLM();
+                            alreadyTriggered = true;
+                        }
                     });
+
+                    btn2.addEventListener('mouseup', async function () {
+                        if (alreadyTriggered) {
+                            defaultLLM();
+                            alreadyTriggered = true;
+                        }
+                    });
+
                     models.forEach(function (model) {
                         if (model.toLowerCase().includes("chat") || model.toLowerCase().includes("instruct")) {
                             const btn = UI.button(menu, model, 'ui-small-btn wide');
