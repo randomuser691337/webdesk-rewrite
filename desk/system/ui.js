@@ -303,7 +303,6 @@ UI = {
 
             const menu = UI.rightClickMenu(event);
             menu.classList.add('right-click-menu');
-            menu.style.width = `${Math.floor(rect.width) - 10}px`;
             items.forEach(function (child) {
                 const btn2 = UI.button(menu, child.name, 'ui-small-btn wide');
                 let alreadyFired = false;
@@ -320,6 +319,11 @@ UI = {
                     }
                 });
             });
+
+            console.log(rect.width);
+            console.log(Math.floor(rect.width));
+            menu.style.width = `${Math.floor(rect.width) - 10}px`;
+            console.log(menu.style.width);
         }
 
         btn.addEventListener('mousedown', trigger);
@@ -437,7 +441,6 @@ UI = {
 
                     const menu = UI.rightClickMenu(event);
                     menu.classList.add('menuBar-Menu');
-                    menu.style.width = `${Math.floor(rect.width) - 10}px`;
                     const menuBarItems2 = [{
                         name: "Quit", action: function () {
                             closeBtn.click();
@@ -474,7 +477,6 @@ UI = {
 
                             const menu = UI.rightClickMenu(event);
                             menu.classList.add('menuBar-Menu');
-                            menu.style.width = `${Math.floor(rect.width) - 10}px`;
                             menuBarItem.children.forEach(function (child) {
                                 const btn2 = UI.button(menu, child.name, 'ui-small-btn wide');
                                 let alreadyFired = false;
@@ -491,6 +493,8 @@ UI = {
                                     }
                                 });
                             });
+
+                            menu.style.width = `${Math.floor(rect.width) - 10}px`;
                         }
 
                         btn.addEventListener('mousedown', trigger);
@@ -625,7 +629,6 @@ UI = {
         const menu = this.create('div', document.body, 'right-click-menu');
         menu.style.left = `${event.clientX}px`;
         menu.style.top = `${event.clientY}px`;
-        menu.style.width = "140px"; // fuck it
         // protection
 
         const rect = menu.getBoundingClientRect();
@@ -645,6 +648,7 @@ UI = {
             }, { once: true });
         }, 250);
 
+        menu.style.width = "140px"; // fuck it
         return menu;
     },
     line: function (parent) {
@@ -738,7 +742,7 @@ UI = {
                 UI.changevar('ui-transparency', '0.9');
                 UI.changevar('ui-transparency-secondary', '0.5');
                 UI.changevar('ui-transparency-tertiary', '0.7');
-                UI.changevar('big-shadow', '0 6px 12px rgba(0, 0, 0, 0.2)')
+                UI.changevar('big-shadow', '0 12px 36px rgba(0, 0, 0, 0.24)')
                 UI.changevar('small-shadow', '1px 0 8px rgba(0, 0, 0, 0.12)');
                 sys.lowgfxMode = false;
             }

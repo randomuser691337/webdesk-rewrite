@@ -19,7 +19,7 @@ export async function launch(UI, fs, core) {
     const contLLM = UI.create('div', llmBTN, 'waiting');
     const ring = UI.create('div', contLLM, 'ring');
 
-    if (await set.read('chloe', 'deactivated')) {
+    if (await set.read('chloe') !== "activated") {
         llmBTN.style.display = "none";
     }
 

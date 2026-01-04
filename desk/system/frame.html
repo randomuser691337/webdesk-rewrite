@@ -8,10 +8,10 @@
 </head>
 
 <body>
+    <p>FrameBoot v1.0</p>
+    <p>- requesting UI</p>
     <script>
         window.addEventListener("message", (event) => {
-            // if (event.origin !== "http://example.com:8080") return;
-            console.log('test!!!dsalfjkadsfkdjfasdj;');
             event.source.postMessage("Faaaawk", event.origin);
         });
     </script>

@@ -150,6 +150,7 @@ export async function launch(UI, fs, core, unused, module) {
     async function Assistant() {
         content.innerHTML = '';
         title.innerText = "Manage AI";
+        UI.text(content, `AI features are no longer supported or updated`, 'smalltxt');
         if (('gpu' in navigator)) {
             const gpuTest = await UI.System.GPUTest();
             const compatDiv = UI.create('div', content, 'message-box-group');
@@ -161,7 +162,7 @@ export async function launch(UI, fs, core, unused, module) {
                 compatDiv.classList.add('good');
                 UI.text(compatDiv, `Compatibility`, 'bold');
                 UI.text(compatDiv, `Your graphics processor can run big LLMs well.`);
-            } else if (gpuTest.perfScore < 0.003) {
+            } else if (gpuTest.perfScore < 0.0012) {
                 compatDiv.classList.add('okay');
                 UI.text(compatDiv, `Compatibility`, 'bold');
                 UI.text(compatDiv, `Your graphics processor can run the default or mid-sized LLMs fine.`);
@@ -175,7 +176,7 @@ export async function launch(UI, fs, core, unused, module) {
             appearbar.left.innerHTML = '<span class="smalltxt">AI features</span>';
             const enableBtn = UI.switch.create(appearbar.right, false);
 
-            if (await set.read('chloe') !== 'deactivated') {
+            if (await set.read('chloe') === 'activated') {
                 UI.switch.check(enableBtn);
             }
 
@@ -205,7 +206,7 @@ export async function launch(UI, fs, core, unused, module) {
                     UI.text(areyousure, 'WebDesk will reboot if you disable AI features.');
                     const yes = UI.button(areyousure, 'Disable', 'ui-med-btn');
                     yes.addEventListener('click', async function () {
-                        await set.write('chloe', 'deactivated');
+                        await set.del('chloe');
                         window.location.reload();
                     });
 

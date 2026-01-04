@@ -13,7 +13,48 @@ var win;
 
 export async function launch(UI, fs, core, unused, module) {
     core2 = core;
-    win = UI.window('Files', module, undefined, '/apps/Files.app/icon.svg');
+    let currentDir = "";
+    let actions = [{
+        "title": "File", "children": [{
+            name: "New folder", action: function () {
+                const input = UI.input(filelist, "Folder name");
+                input.focus();
+                input.style = `
+                color: var(--text);
+                box-sizing: border-box;
+                margin: 0px;
+                width: 100%;
+                padding: 3px;
+                overflow: hidden;
+                text-align: left;
+                transition: 0.04s ease-in-out;
+                border-radius: var(--round-small);
+                font-weight: 400;
+                margin-bottom: var(--margin-main);
+                background-color: rgba(var(--ui-accent), 0.3);
+                border: 1px solid rgba(var(--ui-accent), 0.4);`
+                input.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter') {
+                        if (input.value !== "") {
+                            fs.mkdir(currentDir + "/" + input.value);
+                            UI.remove(input);
+                        } else {
+                            UI.snack(`Folder name can't be empty`);
+                        }
+                    }
+
+                    if (e.key === 'Escape' || e.key === 'Esc') {
+                        UI.remove(input);
+                    }
+                });
+
+                input.addEventListener('blur', () => {
+                    UI.remove(input);
+                });
+            }
+        }]
+    }];
+    win = UI.window('Files', module, actions, '/apps/Files.app/icon.svg');
     codeToKillTask = function () {
         core2.removeModule(id);
         win.closeWin();
@@ -57,16 +98,9 @@ export async function launch(UI, fs, core, unused, module) {
     win.header.style.flex = "none";
     sidebarcontent.style.flex = "1";
     sidebarcontent.style.overflow = "auto";
-
-    const addBtn = UI.button(leftright.right, '+', 'ui-small-btn');
-    let actions = [{
-        name: "New folder", action: function () {
-            console.log("<!> no folder actions yet");
-        }
-    }];
-    UI.menu(addBtn, actions);
     let dir;
     async function nav(path) {
+        currentDir = path;
         dir = await fs.ls(path);
         console.log(path);
         console.log(dir);

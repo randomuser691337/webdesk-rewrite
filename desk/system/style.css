@@ -19,7 +19,7 @@
     --round-main: 16px;
     --round-secondary: 12px;
     --round-small: 9px;
-    --big-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+    --big-shadow: 0 12px 36px rgba(0, 0, 0, 0.24);
     --small-shadow: 1px 0 8px rgba(0, 0, 0, 0.12);
     --margin-main: 0.3em;
     --margin-small: 0.1em;
@@ -405,6 +405,10 @@ input,
     width: 100%;
     margin-left: 0px !important;
     margin-right: 0px !important;
+}
+
+*:focus {
+    outline: none;
 }
 
 .list-item {

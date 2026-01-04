@@ -1,5 +1,9 @@
 WebDesk UI documentation and scripts
 For more examples or code, check out /apps/Files.app/index.js. Files is a good example.
+Q/A: 
+
+Q: Does WebDesk have a core?
+A: In a way, the core var (index.html), fs.js/wfs.js, and UI.js could be seen as one though.
 
 UI functions:
     - UI.create(eltype, parent, classname)
@@ -61,4 +65,4 @@ System functions:
     - core.removeModule(id)
       - Removes a module/task from core.tasks via its Task ID.
       - Side note: All modules created with core.loadModule(JS code) have the id variable predefined.
-        - If you were to kill your app and you have the core accessible, all you'd have to do is core.removeModule(id).
+        - If you were to kill your app and you have the core var accessible, all you'd have to do is core.removeModule(id).

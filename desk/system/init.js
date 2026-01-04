@@ -35,7 +35,7 @@
                     const desktop = await fs.read('/system/apps/Desktop.app/index.js');
                     core.loadModule(desktop).then(async (mod) => {
                         if (('gpu' in navigator)) {
-                            if (await set.read('chloe') !== "deactivated") {
+                            if (await set.read('chloe') === "activated") {
                                 wd.startLLM();
                             }
                         } else {
@@ -73,7 +73,7 @@
             const desktop = await fs.read('/system/apps/Desktop.app/index.js');
             core.loadModule(desktop).then(async (mod) => {
                 if (('gpu' in navigator)) {
-                    if (await set.read('chloe') !== "deactivated") {
+                    if (await set.read('chloe') === "activated") {
                         wd.startLLM();
                     }
                 } else {

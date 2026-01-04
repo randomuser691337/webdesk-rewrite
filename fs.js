@@ -112,6 +112,29 @@ fs = {
             worker.postMessage({ optype: "mkdir", uID, data: path });
         });
     },
+    passcode: async function (code) {
+        const uID = gen(0, 9999);
+
+        let fsSalt;
+        let saltBlob = await localStorage.getItem('salt');
+        if (!saltBlob) {
+            console.log('<!> No salt. Goodbye old data!');
+            fsSalt = crypto.getRandomValues(new Uint8Array(16));
+            await localStorage.setItem('salt', fsSalt);
+        } else {
+            fsSalt = new Uint8Array(saltBlob);
+        }
+
+
+        console.log(fsSalt);
+
+        const check = await new Promise((resolve, reject) => {
+            currentops.push({ uID, resolve, reject });
+            worker.postMessage({ optype: "pin", uID, data: code, data2: fsSalt });
+        });
+
+        console.log(check);
+    },
     erase: async function () {
         const uID = gen(0, 9999);
         const check = await new Promise((resolve, reject) => {

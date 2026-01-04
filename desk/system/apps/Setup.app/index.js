@@ -92,7 +92,7 @@ export async function launch(UI, fs, core) {
                         const whatnow = UI.create('div', setup, 'cm');
                         UI.text(whatnow, "Migration complete!", 'bold');
                         UI.text(whatnow, "Decide what to do with your old data.");
-                        UI.text(whatnow, "Delete: Erases old WebDesk and it's data. User files have moved here, so they're safe.");
+                        UI.text(whatnow, "Delete: Erases old WebDesk and it's data. User files moved here, so they're safe.");
                         UI.text(whatnow, "Leave alone: Saves old WebDesk so you can boot into it later. Uses more space.");
                         const delBtn = UI.button(whatnow, "Delete", "ui-big-btn");
                         delBtn.addEventListener('click', async () => {
@@ -245,9 +245,18 @@ export async function launch(UI, fs, core) {
         }
 
         if (!navigator.gpu) {
+            const gpuTest = await UI.System.GPUTest();
+            const compatDiv = UI.create('div', setup, 'message-box-group okay');
+            if (gpuTest.perfScore > 0.003) {
+                UI.text(compatDiv, `Warning - AI features`, 'bold');
+                UI.text(compatDiv, `Your graphics processor can't run LLMs. You should disable AI features.`);
+            }
+        }
+
+        if (!navigator.gpu) {
             const compatDiv = UI.create('div', setup, 'message-box-group okay');
             UI.text(compatDiv, `Warning - AI features`, 'bold');
-            UI.text(compatDiv, `Your browser doesn't support WebGPU. AI features can't be used in this browser.`);
+            UI.text(compatDiv, `Your graphics are too weak to run any LLMs. Leave AI features disabled.`);
         }
 
         const doneBtn = UI.button(setup, "Okay", "ui-big-btn");
@@ -325,7 +334,7 @@ export async function launch(UI, fs, core) {
 
         function deactivateAI() {
             set.write('setupdone', 'true');
-            set.write('chloe', 'deactivated');
+            set.del('chloe');
             UI.snack('AI features deactivated. You can reactivate them in Settings > Manage AI.');
             deactivateAIBtn.Filler.innerText = "Reactivate AI features";
             deactivateAIBtn.removeEventListener('click', deactivateAI);
@@ -334,7 +343,7 @@ export async function launch(UI, fs, core) {
 
         function reactivateAI() {
             set.write('setupdone', 'true');
-            set.del('chloe');
+            set.write('chloe', 'activated');
             UI.snack('AI features reactivated. You can deactivate them in Settings > Manage AI.');
             deactivateAIBtn.Filler.innerText = "Deactivate AI features";
             deactivateAIBtn.removeEventListener('click', reactivateAI);
