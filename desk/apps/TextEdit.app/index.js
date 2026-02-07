@@ -10,7 +10,7 @@ export async function launch(UI, fs, core, defaultlaunch, module) {
     core2 = core;
     async function open(path) {
         const bootcode = await fs.read(path);
-        win = UI.window('TextEdit', module);
+        win = UI.window('TextEdit - ' + path, module);
         codeToKillTask = function () {
             core2.removeModule(id);
             win.closeWin();
@@ -39,7 +39,7 @@ export async function launch(UI, fs, core, defaultlaunch, module) {
         textbox.textContent = bootcode;
 
         if (textbox.value === "[object File]") {
-            p.innerText = "This file is not a text file. It's meant to be opened with something else.";
+            p.innerText = "This file doesn't seem to be a text file. It's meant to be opened with something else.";
         }
 
         win.updateWindow();

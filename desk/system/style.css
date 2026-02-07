@@ -13,16 +13,17 @@
     --font-size-ui: 14px;
     --font-size-small: 12px;
     --main-ui-blur: 8px;
+    --small-ui-blur: 4px;
     --ui-transparency: 0.9;
     --ui-transparency-secondary: 0.5;
     --ui-transparency-tertiary: 0.7;
     --round-main: 16px;
     --round-secondary: 12px;
     --round-small: 9px;
-    --big-shadow: 0 12px 36px rgba(0, 0, 0, 0.24);
-    --small-shadow: 1px 0 8px rgba(0, 0, 0, 0.12);
-    --margin-main: 0.3em;
-    --margin-small: 0.1em;
+    --big-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+    --small-shadow: 1px 0 8px rgba(0, 0, 0, 0.1);
+    --margin-main: 0.4em;
+    --margin-small: 0.12em;
     --anim-speed-fast: 0.1s;
     --anim-speed-medium: 0.2s;
     --anim-speed-slow: 0.3s;
@@ -54,6 +55,7 @@ p {
 
 .big-text {
     font-size: calc(var(--font-size-text) * 0.6 + var(--font-size-small));
+    margin: 0px !important;
 }
 
 button,
@@ -197,99 +199,6 @@ input,
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
 }
 
-.window-btn {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: none;
-    position: relative;
-    margin-right: 9px;
-}
-
-.window-btn:last-child {
-    margin-right: 0;
-}
-
-.window-btn:before,
-.window-btn:after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    border-radius: 1px;
-    opacity: 0;
-}
-
-.close-btn {
-    background: #FF5D5B;
-}
-
-.close-btn:active {
-    filter: brightness(1.15);
-}
-
-.min-btn {
-    background: #FFBB39;
-}
-
-.min-btn:active {
-    filter: brightness(1.15);
-}
-
-.max-btn {
-    background: #00CD4E;
-}
-
-.max-btn:active {
-    filter: brightness(1.15);
-}
-
-.close-btn:before,
-.close-btn:after {
-    width: 1.5px;
-    height: 70%;
-    background: #460100;
-}
-
-.hide {
-    display: none;
-}
-
-.close-btn:before {
-    transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.close-btn:after {
-    transform: translate(-50%, -50%) rotate(-45deg);
-}
-
-.min-btn:before {
-    width: 70%;
-    height: 1.5px;
-    background: #460100;
-}
-
-.max-btn:before {
-    width: 50%;
-    height: 50%;
-    background: #024D0F;
-}
-
-.max-btn:after {
-    width: 2px;
-    height: 70%;
-    transform: translate(-50%, -50%) rotate(45deg);
-    background: #00CD4E;
-}
-
-.window-header-nav:hover .window-btn:before,
-.window-header-nav:hover .window-btn:after {
-    top: 50%;
-    opacity: 1;
-}
-
 .ui-big-btn {
     background-color: rgba(var(--ui-primary), 1.0);
     color: var(--text);
@@ -427,6 +336,11 @@ input,
     margin-bottom: var(--margin-main);
 }
 
+.list-item-fake-focus {
+    background-color: rgba(var(--ui-accent), 0.3);
+    border: 1px solid rgba(var(--ui-accent), 0.4);
+}
+
 .list-item:hover {
     background-color: rgba(var(--ui-accent), 0.3);
     border: 1px solid rgba(var(--ui-accent), 0.4);
@@ -476,7 +390,7 @@ input,
     border: none;
     border-radius: 5px;
     box-sizing: border-box;
-    padding: 3px;
+    padding: 4px 6px;
     font-size: var(--font-size-small);
 }
 
@@ -500,6 +414,7 @@ input,
 .menuBar-btn {
     background-color: transparent;
     border: none;
+    padding: 4px 6px;
     border-radius: 5px;
     color: var(--text);
     font-size: var(--font-size-small) !important;
@@ -523,7 +438,7 @@ input,
 .taskbar-menu {
     position: fixed;
     background-color: rgba(var(--ui-primary), var(--ui-transparency));
-    padding: 8px;
+    padding: 12px;
     border: 1px solid rgba(var(--ui-tertiary));
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
@@ -614,7 +529,7 @@ input,
 }
 
 .content {
-    padding: 10px;
+    padding: 12px;
 }
 
 .smalltxt {
@@ -664,10 +579,39 @@ input,
     max-height: 95% !important;
 }
 
+.spotlight-flex-container {
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background-color: rgba(var(--ui-primary), 0.1);
+    backdrop-filter: blur(var(--small-ui-blur));
+    --webkit-backdrop-filter: blur(var(--small-ui-blur));
+    padding: 20px;
+    z-index: 999999;
+}
+
+.spotlight-window {
+    width: 500px;
+    background-color: rgba(var(--ui-primary), 1);
+    border: 1px solid rgba(var(--ui-secondary), 1.0);
+    border-radius: var(--round-main);
+    box-shadow: var(--big-shadow);
+    padding: 20px;
+    overflow: auto;
+    max-width: 95% !important;
+    max-height: 95% !important;
+}
+
 .right-click-menu {
     position: fixed;
     background-color: rgba(var(--ui-primary), var(--ui-transparency-secondary));
-    padding: 3px;
+    padding: 4px;
     border: 1px solid rgba(var(--ui-tertiary), var(--ui-transparency-secondary));
     backdrop-filter: blur(var(--main-ui-blur));
     --webkit-backdrop-filter: blur(var(--main-ui-blur));
@@ -972,6 +916,7 @@ p {
     background-color: rgba(0, 0, 0, 0);
     border: none;
     padding: 0px !important;
+    margin: 2px;
 }
 
 .ui-dock-btn:active {

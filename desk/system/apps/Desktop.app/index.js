@@ -15,6 +15,8 @@ export async function launch(UI, fs, core) {
     const left = UI.create('div', taskbar, 'window-header-nav');
     const appBTN = UI.button(left, '', 'ui-dock-btn');
     UI.img(appBTN, '/system/lib/img/apps.svg', 'dock-icon');
+    const spotlightBTN = UI.button(left, '', 'ui-dock-btn');
+    UI.img(spotlightBTN, '/system/lib/img/search.svg', 'dock-icon');
     const llmBTN = UI.button(left, '', 'ring-btn');
     const contLLM = UI.create('div', llmBTN, 'waiting');
     const ring = UI.create('div', contLLM, 'ring');
@@ -33,7 +35,7 @@ export async function launch(UI, fs, core) {
         const rect = contBTN.getBoundingClientRect();
         const event = {
             clientX: Math.floor(rect.left),
-            clientY: Math.floor(rect.bottom) + 6
+            clientY: Math.floor(rect.bottom + 8)
         };
 
         const menu = UI.rightClickMenu(event);
@@ -87,6 +89,7 @@ export async function launch(UI, fs, core) {
         });
 
         menu.style.width = "140px";
+        menu.ready();
     });
 
     if (sys.LLMLoaded === "unsupported") {
@@ -99,7 +102,7 @@ export async function launch(UI, fs, core) {
         const rect = webdeskButton.getBoundingClientRect();
         const event = {
             clientX: Math.floor(rect.left),
-            clientY: Math.floor(rect.bottom) + 6
+            clientY: Math.floor(rect.bottom + 8)
         };
 
         const menu = UI.rightClickMenu(event);
@@ -116,6 +119,7 @@ export async function launch(UI, fs, core) {
             btn2.addEventListener('click', child.action);
             btn2.addEventListener('mouseup', child.action);
         });
+        menu.ready();
     });
 
     UI.System.SystemMenus.MenuBarActions = UI.create('div', leftMenuBar);
@@ -174,8 +178,8 @@ export async function launch(UI, fs, core) {
                     UI.text(menu, `${file.name} is corrupted or deleted.`);
                     const rm = UI.button(menu, 'Remove app', 'ui-med-btn');
                     rm.addEventListener('click', function () {
-                        fs.del(file.path);
-                        fs.del(path.substring(0, path.lastIndexOf('/')), true);
+                        fs.rm(file.path);
+                        fs.rm(path.substring(0, path.lastIndexOf('/')), true);
                         UI.remove(menu);
                     });
                     const close = UI.button(menu, 'Close', 'ui-med-btn');
@@ -217,6 +221,22 @@ export async function launch(UI, fs, core) {
         currentMenu.type = "apps";
         document.addEventListener('mousedown', handleOutsideClick);
     }
+
+    async function launchSpot() {
+        const mod = await core.loadModule(await fs.read('/apps/Spotlight.app/index.js'));
+        mod.launch(UI, fs, core);
+    }
+
+    document.addEventListener('keydown', async function (event) {
+        if (event.ctrlKey && event.shiftKey && event.key === 'S') {
+            event.preventDefault();
+            await launchSpot();
+        }
+    });
+
+    spotlightBTN.addEventListener('click', async function (event) {
+        await launchSpot();
+    });
 
     async function openLLMMenu() {
         closeCurrentMenu();

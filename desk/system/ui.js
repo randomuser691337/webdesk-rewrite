@@ -324,6 +324,8 @@ UI = {
             console.log(Math.floor(rect.width));
             menu.style.width = `${Math.floor(rect.width) - 10}px`;
             console.log(menu.style.width);
+
+            menu.ready();
         }
 
         btn.addEventListener('mousedown', trigger);
@@ -436,7 +438,7 @@ UI = {
                     const rect = btn.getBoundingClientRect();
                     const event = {
                         clientX: Math.floor(rect.left),
-                        clientY: Math.floor(rect.bottom) + 6
+                        clientY: Math.floor(rect.bottom + 8)
                     };
 
                     const menu = UI.rightClickMenu(event);
@@ -463,6 +465,7 @@ UI = {
                             }
                         });
                     });
+                    menu.ready();
                 });
 
                 if (menuBarItems) {
@@ -472,13 +475,13 @@ UI = {
                             const rect = btn.getBoundingClientRect();
                             const event = {
                                 clientX: Math.floor(rect.left),
-                                clientY: Math.floor(rect.bottom)
+                                clientY: Math.floor(rect.bottom + 8)
                             };
 
                             const menu = UI.rightClickMenu(event);
                             menu.classList.add('menuBar-Menu');
                             menuBarItem.children.forEach(function (child) {
-                                const btn2 = UI.button(menu, child.name, 'ui-small-btn wide');
+                                const btn2 = UI.button(menu, child.name, 'ui-menubar-btn wide');
                                 let alreadyFired = false;
                                 btn2.addEventListener('click', function () {
                                     if (alreadyFired === false) {
@@ -495,6 +498,7 @@ UI = {
                             });
 
                             menu.style.width = `${Math.floor(rect.width) - 10}px`;
+                            menu.ready();
                         }
 
                         btn.addEventListener('mousedown', trigger);
@@ -596,6 +600,9 @@ UI = {
         const blob = await fs.read(path);
         if (blob instanceof Blob) {
             img.src = URL.createObjectURL(blob);
+        } else if (path.endsWith('.svg')) {
+            const data = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(blob);
+            img.src = data;
         } else {
             console.log(`<!> ` + path + ` is not an image decodable by WebDesk's UI. Trying URL...`);
             img.src = path;
@@ -626,29 +633,47 @@ UI = {
         }
     },
     rightClickMenu: function (event) {
+        UI.System.SystemMenus.closeCurrentMenu();
         const menu = this.create('div', document.body, 'right-click-menu');
         menu.style.left = `${event.clientX}px`;
         menu.style.top = `${event.clientY}px`;
-        // protection
 
-        const rect = menu.getBoundingClientRect();
-        console.log(rect);
-        console.log(document.documentElement.clientWidth);
-        console.log(event.clientX + rect.width);
-        if (document.documentElement.clientWidth < event.clientX + rect.width) {
-            menu.style.right = `4px`;
-            menu.style.left = `auto`;
-        } else {
-            console.log('<i> menu doesnt need repos');
+        function ready() {
+            // protection
+
+            const rect = menu.getBoundingClientRect();
+            console.log(rect);
+            console.log(document.documentElement.clientWidth);
+            console.log(event.clientX + rect.width);
+            console.log(document.documentElement.clientWidth, event.clientX, rect.width, rect);
+            if (document.documentElement.clientWidth < event.clientX + rect.width) {
+                menu.style.right = `4px`;
+                menu.style.left = `auto`;
+            } else {
+                console.log('<i> menu doesnt need repos');
+            }
+
+            setTimeout(function () {
+                document.addEventListener('click', () => {
+                    UI.remove(menu);
+                    UI.System.SystemMenus.closeCurrentMenu = function () { console.log('<i> No open menus!') };
+                }, { once: true });
+
+                document.addEventListener('mousedown', function (event) {
+                    const clickedElement = event.target;
+
+                    if (!menu.contains(clickedElement)) {
+                        UI.remove(menu);
+                        UI.System.SystemMenus.closeCurrentMenu = function () { console.log('<i> No open menus!') };
+                    }
+                });
+            }, 250);
+
+            menu.style.width = "140px"; // fuck it
         }
 
-        setTimeout(function () {
-            document.addEventListener('click', () => {
-                UI.remove(menu);
-            }, { once: true });
-        }, 250);
-
-        menu.style.width = "140px"; // fuck it
+        UI.System.SystemMenus.closeCurrentMenu = function () { UI.remove(menu) };
+        menu.ready = ready;
         return menu;
     },
     line: function (parent) {
@@ -668,16 +693,46 @@ UI = {
         }, duration);
         return snackbar;
     },
+    openFile: async function (file, openInFiles, openFilesForFolders) {
+        if (file.kind === "directory" && (file.path.endsWith('.app') || file.path.endsWith('.app/'))) {
+            const code = await fs.read(file.path + '/index.js');
+            const mod = await core.loadModule(code);
+            await mod.launch(UI, fs, core, true);
+        } else if (file.kind === "directory") {
+            if (openInFiles !== false && openInFiles !== undefined) {
+                // files window nav function
+                openInFiles(file.path);
+            } else if (openFilesForFolders === true) {
+                const code = await fs.read('/apps/Files.app/index.js');
+                const mod = await core.loadModule(code);
+                const win = await mod.launch(UI, fs, core, true);
+                win.open(file.path);
+            }
+        } else {
+            if (file.path.endsWith('.png') || file.path.endsWith('.jpg') || file.path.endsWith('.jpeg') || file.path.endsWith('.gif')) {
+                const code = await fs.read('/apps/Preview.app/index.js');
+                const mod = await core.loadModule(code);
+                const preview = await mod.launch(UI, fs, core);
+                preview.open(file.path, false, file.path, undefined, mod);
+            } else {
+                const code = await fs.read('/apps/TextEdit.app/index.js');
+                const mod = await core.loadModule(code);
+                const textedit = await mod.launch(UI, fs, core, undefined, mod);
+                textedit.open(file.path);
+            }
+        }
+    },
     focusedWindow: undefined,
     previousFocusedWindow: undefined,
     System: {
         SystemMenus: {
             taskbar: undefined,
             menubar: undefined,
+            closeCurrentMenu: function () { console.log('<i> No open menus!') },
         },
         launchApp: async function (path) {
             const code = await fs.read(path);
-
+            
         },
         darkMode: function () {
             UI.changevar('ui-primary', '40, 40, 40');
@@ -768,7 +823,7 @@ UI = {
             while (colors.length < 6) {
                 const hue = selectRandomColor();
                 const sat = 100;
-                const light = textColor === "#fff" ? 50 : 60;
+                const light = textColor === "#fff" ? 40 : 70;
                 colors.push(\`hsl(\${hue},\${sat}%,\${light}%)\`);
             }
 

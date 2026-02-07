@@ -14,12 +14,11 @@ var win;
 export async function launch(UI, fs, core, unused, module) {
     core2 = core;
     let currentDir = "";
-    let actions = [{
-        "title": "File", "children": [{
-            name: "New folder", action: function () {
-                const input = UI.input(filelist, "Folder name");
-                input.focus();
-                input.style = `
+    let inputValue;
+    function newSomething(placeholder, createFunction) {
+        const input = UI.input(filelist, placeholder);
+        input.focus();
+        input.style = `
                 color: var(--text);
                 box-sizing: border-box;
                 margin: 0px;
@@ -33,25 +32,36 @@ export async function launch(UI, fs, core, unused, module) {
                 margin-bottom: var(--margin-main);
                 background-color: rgba(var(--ui-accent), 0.3);
                 border: 1px solid rgba(var(--ui-accent), 0.4);`
-                input.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') {
-                        if (input.value !== "") {
-                            fs.mkdir(currentDir + "/" + input.value);
-                            UI.remove(input);
-                        } else {
-                            UI.snack(`Folder name can't be empty`);
-                        }
-                    }
-
-                    if (e.key === 'Escape' || e.key === 'Esc') {
-                        UI.remove(input);
-                    }
-                });
-
-                input.addEventListener('blur', () => {
+        input.addEventListener('keydown', async function (e) {
+            inputValue = input.value;
+            if (e.key === 'Enter') {
+                if (input.value !== "") {
+                    await createFunction();
+                    await nav(currentDir + "/");
                     UI.remove(input);
-                });
+                } else {
+                    UI.snack(`Folder name can't be empty`);
+                }
             }
+
+            if (e.key === 'Escape' || e.key === 'Esc') {
+                UI.remove(input);
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            UI.remove(input);
+        });
+    }
+    let actions = [{
+        "title": "File", "children": [{
+            name: "New folder", action: async () => newSomething('Folder name', () => fs.mkdir(currentDir + "/" + inputValue))
+        },
+        {
+            name: "New text file", action: async () => newSomething('File name', async function () {
+                await fs.write(currentDir + "/" + inputValue, '');
+                await UI.openFile({kind: "file", path: currentDir + "/" + inputValue});
+            })
         }]
     }];
     win = UI.window('Files', module, actions, '/apps/Files.app/icon.svg');
@@ -68,8 +78,8 @@ export async function launch(UI, fs, core, unused, module) {
     const sidebar = UI.create('div', win.content, 'window-split-sidebar');
     sidebar.appendChild(win.header);
     win.header.classList.add('window-header-clear');
-    win.header.style.padding = "14px";
-    win.header.style.paddingBottom = "4px";
+    win.header.style.padding = "15px";
+    win.header.style.paddingBottom = "8px";
     const sidebarcontent = UI.create('div', sidebar, 'content');
     sidebarcontent.style.paddingTop = "0px";
     UI.create('span', sidebarcontent, 'smalltxt').textContent = "Favorites";
@@ -163,7 +173,7 @@ export async function launch(UI, fs, core, unused, module) {
 
             const button = UI.button(filelist, name, 'list-item');
             button.addEventListener('dblclick', async function () {
-                await openfile();
+                await UI.openFile(file, nav, false);
             });
 
             let contextMenu;
@@ -176,11 +186,7 @@ export async function launch(UI, fs, core, unused, module) {
 
                 const openButton = UI.button(contextMenu, 'Open', 'ui-small-btn wide');
                 openButton.addEventListener('click', async function () {
-                    if (file.kind === "directory") {
-                        await nav(file.path);
-                    } else {
-                        await openfile();
-                    }
+                    await UI.openFile(file, nav, false);
                     contextMenu.remove();
                 })
                 const deleteButton = UI.button(contextMenu, 'Delete', 'ui-small-btn wide');
@@ -213,23 +219,45 @@ export async function launch(UI, fs, core, unused, module) {
                     deleteButtonMenu();
                 });
 
-                const renameButton = UI.button(contextMenu, 'Rename', 'ui-small-btn wide');
+                const renameButton = UI.button(contextMenu, 'Move or rename', 'ui-small-btn wide');
                 function renameButtonMenu() {
                     if (onehundredpercentexpendable === true) return;
                     onehundredpercentexpendable = true;
                     contextMenu.remove();
                     const div = UI.create('div', document.body, 'cm');
-                    UI.text(div, `Delete ${file.name}?`, 'bold');
-                    UI.text(div, 'Deleted files cannot be recovered.');
+                    const txt = UI.text(div, `Move or rename ${file.name}`, 'bold');
+                    const inp = UI.input(div, 'Path', 'ui-main-input wide');
+                    inp.value = file.path;
                     const yesBtn = UI.button(div, 'Rename', 'ui-small-btn');
                     yesBtn.onclick = async () => {
-                        UI.remove(div);
+                        txt.innerText = "Moving...";
+                        if (inp.value.endsWith("/")) inp.value = inp.value.slice(0, -1);
                         if (file.kind === "directory") {
-                            await fs.rm(file.path, true);
+                            async function mover(path) {
+                                const dir = await fs.ls(path);
+                                dir.forEach(async function (file) {
+                                    if (file.kind === "directory") {
+                                        mover(file.path);
+                                    } else {
+                                        const file2 = await fs.read(file.path);
+                                        console.log(file.path);
+                                        const nameonly = file.path.slice(inp.value.length);
+                                        console.log(nameonly);
+                                        console.log(inp.value + "/" + nameonly);
+                                        await fs.write(inp.value + "/" + nameonly, file2);
+                                        fs.rm(file.path);
+                                    }
+                                });
+                            }
+                            await mover(file.path);
+                            await fs.rm(file.path);
                         } else {
+                            const file2 = await fs.read(file.path);
+                            await fs.write(inp.value, file2);
                             await fs.rm(file.path);
                         }
                         nav(currentPath);
+                        UI.remove(div);
                     };
 
                     const noBtn = UI.button(div, 'Cancel', 'ui-small-btn');
@@ -241,6 +269,8 @@ export async function launch(UI, fs, core, unused, module) {
                 renameButton.addEventListener('mouseup', function (event) {
                     renameButtonMenu();
                 });
+
+                contextMenu.ready();
             });
         });
     }
@@ -282,8 +312,8 @@ export async function pickFile(UI, fs, core) {
         win.content.appendChild(win.buttons.closeBtn);
         sidebar.appendChild(win.header);
         win.header.classList.add('window-header-clear');
-        win.header.style.padding = "14px";
-        win.header.style.paddingBottom = "4px";
+        win.header.style.padding = "15px";
+        win.header.style.paddingBottom = "8px";
         const sidebarcontent = UI.create('div', sidebar, 'content');
         sidebarcontent.style.paddingTop = "0px";
         const container = UI.create('div', win.content, 'window-split-content');

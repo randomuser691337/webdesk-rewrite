@@ -270,9 +270,14 @@ var UI = {
     },
     img: async function (parent, path, classname) {
         const blob = await fs.read(path);
+        let img;
         if (blob instanceof Blob) {
-            const img = this.create('img', parent, classname);
+            img = this.create('img', parent, classname);
             img.src = URL.createObjectURL(blob);
+        } else if (path.endsWith('.svg')) {
+            img = this.create('img', parent, classname);
+            const data = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(blob);
+            img.src = data;
         } else {
             console.log(`<!> ` + path + ` is not an image decodable by WebDesk's UI.`);
         }

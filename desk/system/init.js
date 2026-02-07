@@ -4,6 +4,12 @@
         await core.loadCSS('/system/style.css');
         await core.loadJS('/system/core.js');
         await core.loadJS('/system/lib/socket.io.js');
+        if (await set.read('alt-win-btn-style') === "2") {
+            await core.loadCSS('/system/ui/win-btn-style-2.css');
+        } else {
+            await core.loadCSS('/system/ui/win-btn-style-1.css');
+        }
+
         const checkSockets = await startsockets();
         if (await set.read('setupdone') !== "true") {
             if (checkSockets === true) {

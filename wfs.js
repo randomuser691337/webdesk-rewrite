@@ -5,6 +5,13 @@ console.log(`<i> WebDesk File System ready! Read the docs at the top of fs.js if
 var encrypted = false;
 let passcode = null;
 let key = null;
+const pain = new Uint8Array([
+    0x9f, 0x3a, 0xc2, 0x71, 0x88, 0x0d, 0x5e, 0x41,
+    0x19, 0x2b, 0x6a, 0xf0, 0x34, 0x91, 0xcd, 0xee,
+    0x55, 0x67, 0x04, 0xa8, 0xbb, 0x1f, 0x99, 0x02,
+    0xe3, 0x77, 0x8c, 0x60, 0x0a, 0x4d, 0xf5, 0x29
+]);
+
 
 async function walkPath(fullPath, { create = false, file = false } = {}) {
     const parts = fullPath.split("/").filter(Boolean);
@@ -21,15 +28,31 @@ async function walkPath(fullPath, { create = false, file = false } = {}) {
     }
 }
 
-// To be continued
+async function fileExists(path) {
+    try {
+        await walkPath(path, { create: false, file: true });
+        return true;
+    } catch {
+        return false;
+    }
+}
 
-// Derive a strong AES key from a password (PBKDF2)
+async function dirExists(path) {
+    try {
+        await walkPath(path, { create: false });
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+// Encryption functions definitely not made by ChatGPT (please euthanize me)
 async function deriveKey(password, salt) {
     const enc = new TextEncoder();
 
     const keyMaterial = await crypto.subtle.importKey(
         "raw",
-        enc.encode(password),
+        enc.encode(password + pain),
         "PBKDF2",
         false,
         ["deriveKey"]
@@ -39,7 +62,7 @@ async function deriveKey(password, salt) {
         {
             name: "PBKDF2",
             salt: salt,
-            iterations: 100000,
+            iterations: 500000,
             hash: "SHA-256",
         },
         keyMaterial,
@@ -47,6 +70,21 @@ async function deriveKey(password, salt) {
         true,
         ["encrypt", "decrypt"]
     );
+}
+
+async function setupEncryption(password, uID, salt) {
+    const DEK = await crypto.subtle.generateKey(
+        { name: "AES-GCM", length: 256 },
+        true,
+        ["encrypt", "decrypt"]
+    );
+
+    const KEK = await deriveKey(password, salt);
+    const rawDEK = await crypto.subtle.exportKey("raw", DEK);
+    const wrappedDEK = await encryptData(rawDEK, KEK, false);
+
+    console.log({ KEK, wrappedDEK });
+    self.postMessage({ optype: "firstenc", uID, data: { KEK, wrappedDEK } });
 }
 
 async function encryptData(data, key, isText) {
@@ -82,6 +120,10 @@ async function decryptData(buffer, key) {
 const fs = {
     async read(path, uid, { encrypt = false, key = null } = {}) {
         try {
+            if (path === "/system/DONOTDELETE.salt") {
+                encrypt = false;
+            }
+
             const fileHandle = await walkPath(path, { file: true });
             const file = await fileHandle.getFile();
             let result;
@@ -93,17 +135,7 @@ const fs = {
                 if (type === 1) {
                     result = new TextDecoder().decode(new Uint8Array(decrypted));
                 } else {
-                    // lazy fix
-                    if (path.endsWith('.svg') || path.endsWith('.svg/')) {
-                        console.log(decrypted);
-                        console.log('<i> SVG: ' + path)
-                        result = new Blob([decrypted], {
-                            type: 'image/svg+xml;charset=utf-8'
-                        });
-                        console.log(result);
-                    } else {
-                        result = new Blob([decrypted]);
-                    }
+                    result = new Blob([decrypted]);
                 }
             }
             else {
@@ -141,6 +173,10 @@ const fs = {
     async write(path, uid, content, filetype, { encrypt = false, key = null } = {}) {
         try {
             let blobToWrite;
+
+            if (path === "/system/DONOTDELETE.salt") {
+                encrypt = false;
+            }
 
             if (encrypt === true) {
                 let dataBuffer;
@@ -231,20 +267,29 @@ const fs = {
     },
 
     async ls(path, uid) {
-        try {
-            path = path || "/";
-            if (path.endsWith("/")) path = path.slice(0, -1);
+        path = path || "/";
+        if (path.endsWith("/")) path = path.slice(0, -1);
 
-            const dirHandle = await walkPath(path || "/", { create: false });
+        try {
+            const dirHandle = await walkPath(path, { create: false });
             const entries = [];
             for await (const [name, handle] of dirHandle.entries()) {
-                entries.push({ name, kind: handle.kind, path: `${path}/${name}` });
+                entries.push({ name, kind: handle.kind, path: `${path}/${name}`, isSingleFile: false });
             }
-
             self.postMessage({ optype: "ls", uID: uid, data: entries });
-        } catch (err) {
-            console.error("ls failed:", err);
-            self.postMessage({ optype: "ls", uID: uid, data: null });
+        } catch {
+            const name = path.split("/").pop();
+            const isFile = await fileExists(path);
+
+            if (isFile) {
+                self.postMessage({
+                    optype: "ls",
+                    uID: uid,
+                    data: [{ name, path, kind: "file", isSingleFile: true }]
+                });
+            } else {
+                self.postMessage({ optype: "ls", uID: uid, data: [] });
+            }
         }
     },
 };
@@ -277,6 +322,7 @@ onmessage = async (e) => {
         let fsSalt = data2;
 
         key = await deriveKey(passcode, fsSalt);
+        console.log(key);
         encrypted = true;
 
         console.log('<i> Crypt environment set up.');
@@ -298,6 +344,7 @@ onmessage = async (e) => {
     if (optype === "ls") fs.ls(data, uID);
     if (optype === "rm") fs.del(data, uID, data2);
     if (optype === "mkdir") fs.mkdir(data, uID);
+    if (optype === "firstenc") setupEncryption(data, uID, data2);
 };
 
 self.postMessage({ optype: "ready" });

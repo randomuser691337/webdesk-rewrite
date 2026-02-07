@@ -30,8 +30,8 @@ export async function launch(UI, fs, core, unused, module) {
     const sidebarWinBtnDiv = UI.create('div', sidebar);
     sidebar.appendChild(win.header);
     win.header.classList.add('window-header-clear');
-    win.header.style.padding = "14px";
-    win.header.style.paddingBottom = "4px";
+    win.header.style.padding = "15px";
+    win.header.style.paddingBottom = "8px";
     const sidebarcontent = UI.create('div', sidebar, 'content');
     sidebarcontent.style.paddingTop = "0px";
 
@@ -135,6 +135,23 @@ export async function launch(UI, fs, core, unused, module) {
             } else {
                 set.write('lowend', 'true');
                 UI.System.lowgfxMode(true);
+            }
+        });
+
+        UI.create('div', group1, 'group-line')
+
+        const appearbar2 = UI.leftRightLayout(group1);
+        appearbar2.left.innerHTML = '<span class="smalltxt">Force reinstall/update on every boot</span>';
+        const enableBtn2 = UI.switch.create(appearbar2.right, false);
+        if (await set.read('forceup') === 'true') {
+            UI.switch.check(enableBtn2);
+        }
+
+        enableBtn2.addEventListener('click', () => {
+            if (UI.switch.checked(enableBtn2) === false) {
+                set.del('forceup');
+            } else {
+                set.write('forceup', 'true');
             }
         });
 
@@ -345,6 +362,7 @@ export async function launch(UI, fs, core, unused, module) {
                         }
                     });
                 }
+                menu.ready();
             });
 
             UI.line(group2);
@@ -470,8 +488,8 @@ export async function launch(UI, fs, core, unused, module) {
                 claustrophobic = false;
                 sidebar.classList.remove('sidebar-compacted');
                 win.header.classList.add('window-header-clear');
-                win.header.style.padding = "14px";
-                win.header.style.paddingBottom = "4px";
+                win.header.style.padding = "15px";
+                win.header.style.paddingBottom = "8px";
                 sidebar.style.display = "inline-block";
                 UI.remove(showSideBar);
                 titleCont.appendChild(title);

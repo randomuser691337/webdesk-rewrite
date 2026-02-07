@@ -1,0 +1,92 @@
+.window-btn {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: none;
+    position: relative;
+    margin-right: 9px;
+}
+
+.window-btn:last-child {
+    margin-right: 0;
+}
+
+.window-btn:before,
+.window-btn:after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 1px;
+    opacity: 0;
+}
+
+.close-btn {
+    background: #FF5D5B;
+}
+
+.close-btn:active {
+    filter: brightness(1.15);
+}
+
+.min-btn {
+    background: #FFBB39;
+}
+
+.min-btn:active {
+    filter: brightness(1.15);
+}
+
+.max-btn {
+    background: #00CD4E;
+}
+
+.max-btn:active {
+    filter: brightness(1.15);
+}
+
+.close-btn:before,
+.close-btn:after {
+    width: 1.5px;
+    height: 70%;
+    background: #460100;
+}
+
+.hide {
+    display: none;
+}
+
+.close-btn:before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.close-btn:after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.min-btn:before {
+    width: 70%;
+    height: 1.5px;
+    background: #460100;
+}
+
+.max-btn:before {
+    width: 50%;
+    height: 50%;
+    background: #024D0F;
+}
+
+.max-btn:after {
+    width: 2px;
+    height: 70%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: #00CD4E;
+}
+
+.window-header-nav:hover .window-btn:before,
+.window-header-nav:hover .window-btn:after {
+    top: 50%;
+    opacity: 1;
+}

@@ -112,19 +112,55 @@ fs = {
             worker.postMessage({ optype: "mkdir", uID, data: path });
         });
     },
+    kekdek: function () {
+        const uID2 = gen(0, 9999);
+        return new Promise((resolve, reject) => {
+            currentops.push({ uID: uID2, resolve, reject });
+            worker.postMessage({ optype: "firstenc", uID: uID2, data: code, data2: fsSalt });
+        });
+    },
     passcode: async function (code) {
         const uID = gen(0, 9999);
 
         let fsSalt;
-        let saltBlob = await localStorage.getItem('salt');
+        let saltBlob = await fs.read('/system/DONOTDELETE.salt');
+        let correctCode = false;
+
         if (!saltBlob) {
             console.log('<!> No salt. Goodbye old data!');
+            correctCode = true;
             fsSalt = crypto.getRandomValues(new Uint8Array(16));
-            await localStorage.setItem('salt', fsSalt);
-        } else {
-            fsSalt = new Uint8Array(saltBlob);
-        }
+            console.log(fsSalt + "fucker");
+            await fs.write('/system/DONOTDELETE.salt', fsSalt);
+            console.log("--- NEW ENCRYPTION TEST MODE ---");
+            const kekdek = await fs.kekdek();
 
+            console.log(kekdek);
+
+            async function decryptData(buffer, key) {
+                const iv = new Uint8Array(buffer.slice(0, 12));
+                const type = new Uint8Array(buffer.slice(12, 13))[0];
+                const ciphertext = buffer.slice(13);
+
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv },
+                    key,
+                    ciphertext
+                );
+
+                return { decrypted, type };
+            }
+
+            console.log(await decryptData(kekdek.wrappedDEK, kekdek.KEK));
+
+            console.log("--- NEW ENCRYPTION TEST FINISH ---");
+        } else {
+            const nums = saltBlob.split(',').map(Number);
+            const byteArray = new Uint8Array(nums);
+            const buffer = byteArray.buffer;
+            fsSalt = new Uint8Array(buffer);
+            correctCode = "check";
+        }
 
         console.log(fsSalt);
 
@@ -133,7 +169,22 @@ fs = {
             worker.postMessage({ optype: "pin", uID, data: code, data2: fsSalt });
         });
 
+        if (correctCode === "check") {
+            const check2 = await fs.read('/system/DONOTDELETE.txt');
+            if (check2 === `This file is used to test if decryption worked. Do not delete or modify this, or you will brick your WebDesk and lose data.`) {
+                correctCode = true;
+            } else {
+                correctCode = false;
+            }
+
+            console.log(check2);
+            console.log(correctCode);
+            console.log(check);
+        }
+
         console.log(check);
+
+        return correctCode;
     },
     erase: async function () {
         const uID = gen(0, 9999);
@@ -157,6 +208,7 @@ worker.addEventListener("message", (msg) => {
     }
     currentops.filter(op => {
         if (op.uID === msg.data.uID) {
+            console.log("resolving: " + msg)
             op.resolve(msg.data.data);
             return false;
         }
